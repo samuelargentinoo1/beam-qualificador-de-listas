@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beam — Qualificador de Listas</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡️</text></svg>" />
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <header>
+    <div class="brand">
+      <!-- LOGO: troque este SVG pelo logo oficial da Beam (public/logo.svg) -->
+      <svg class="logo" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g" x1="0" y1="34" x2="34" y2="0">
+            <stop offset="0" stop-color="var(--accent-1)"/>
+            <stop offset="1" stop-color="var(--accent-2)"/>
+          </linearGradient>
+        </defs>
+        <rect x="2" y="2" width="30" height="30" rx="9" fill="url(#g)"/>
+        <path d="M9 25 L25 9 M9 17 L17 9 M17 25 L25 17" stroke="white" stroke-width="2.6" stroke-linecap="round"/>
+      </svg>
+      <div class="brand-text">
+        <strong>beam</strong><span>qualificador de listas</span>
+      </div>
+    </div>
+    <nav>
+      <button class="tab active" data-tab="gerar">Gerar lista</button>
+      <button class="tab" data-tab="listas">Minhas listas</button>
+    </nav>
+    <div class="brand-partner">beam <em>+</em> babuya</div>
+  </header>
+
+  <main>
+    <!-- ============================== TAB: GERAR ============================== -->
+    <section id="tab-gerar" class="tab-panel active">
+      <div class="hero" id="hero">
+        <h1>Qual lista vamos gerar hoje?</h1>
+        <p class="sub">Digite o <b>segmento</b> e a <b>cidade</b>. A ferramenta captura, limpa, cruza os dados
+          (site ✚ CNPJ ✚ Instagram) e entrega <b>leads prontos</b> — sem repetir o que já foi entregue.</p>
+
+        <form id="searchForm" class="search">
+          <svg class="search-ico" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input id="query" type="text" autocomplete="off"
+            placeholder="ex.: imobiliárias de São José do Rio Preto" />
+          <button type="submit" id="btnGerar">Gerar <span id="targetLabel">60</span> leads</button>
+        </form>
+
+        <div class="advanced">
+          <label>UF <input id="uf" maxlength="2" placeholder="SP" /></label>
+          <label>Meta de leads <input id="target" type="number" min="1" max="100" value="60" /></label>
+          <span class="hint">meta padrão: 60 contatos prontos/dia</span>
+        </div>
+        <p id="formError" class="error hidden"></p>
+      </div>
+
+      <!-- progresso -->
+      <div id="progress" class="card progress hidden">
+        <div class="progress-head">
+          <div>
+            <h2 id="progTitle">Gerando lista…</h2>
+            <p id="progQuery" class="muted"></p>
+          </div>
+          <button id="btnCancelar" class="ghost danger">Cancelar</button>
+        </div>
+
+        <div class="funnel">
+          <div class="stat"><span id="stCapturados">0</span><label>capturados<br>no Maps</label></div>
+          <div class="arrow">→</div>
+          <div class="stat"><span id="stLimpos">0</span><label>aprovados<br>na limpeza</label></div>
+          <div class="arrow">→</div>
+          <div class="stat skip"><span id="stJaEntregues">0</span><label>pulados<br>(já entregues)</label></div>
+          <div class="arrow">→</div>
+          <div class="stat bad"><span id="stDescartados">0</span><label>reprovados<br>no cruzamento</label></div>
+          <div class="arrow">→</div>
+          <div class="stat good"><span id="stQualificados">0</span><label>qualificados<br>✓ prontos</label></div>
+        </div>
+
+        <div class="meter"><div id="meterFill"></div><span id="meterText">0 / 60</span></div>
+        <p class="muted small" id="progStage"></p>
+        <pre id="log" class="log"></pre>
+      </div>
+
+      <!-- resultado -->
+      <div id="done" class="card done hidden">
+        <h2 id="doneTitle"></h2>
+        <p id="doneSub" class="muted"></p>
+        <div class="downloads" id="doneDownloads"></div>
+        <button class="ghost" id="btnNova">+ Gerar outra lista</button>
+      </div>
+    </section>
+
+    <!-- ============================== TAB: LISTAS ============================== -->
+    <section id="tab-listas" class="tab-panel">
+      <h1>Minhas últimas listas</h1>
+      <p class="sub">Baixe de novo qualquer lista já gerada. O contador mostra o total já entregue em cada praça —
+        gerações novas na mesma praça <b>nunca repetem</b> esses leads.</p>
+      <div id="listas" class="listas"></div>
+      <p id="listasVazio" class="muted hidden">Nenhuma lista ainda. Gere a primeira na aba “Gerar lista”. ✨</p>
+    </section>
+  </main>
+
+  <footer>Ferramenta interna Beam + Babuya · dados cruzados: site ✚ CNPJ (QSA) ✚ Instagram confirmado no site</footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

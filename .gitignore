@@ -1,0 +1,23 @@
+# dependências
+node_modules/
+
+# ============ DADOS SENSÍVEIS — NUNCA SUBIR (repo público) ============
+# listas geradas: contêm dados reais de leads (nomes, telefones, CNPJs, sócios)
+listas/
+# estado da ferramenta: ledger com leads entregues + histórico + PERFIL DO CHROME (cookies/sessões!)
+data/
+# logs de execução (contêm nomes de empresas processadas)
+server.log
+*.log
+
+# documento interno do processo (contém links privados do Drive)
+*.docx
+
+# artefatos de sessão/screenshots
+.playwright-mcp/
+*.png
+*.jpeg
+
+# sistema
+.DS_Store
+.claude/
