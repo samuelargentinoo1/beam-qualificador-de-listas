@@ -84,6 +84,7 @@ function renderJob(job) {
   $('#stLimpos').textContent = c.limpos || 0;
   $('#stJaEntregues').textContent = c.jaEntregues || 0;
   $('#stDescartados').textContent = c.descartados || 0;
+  $('#stAdiados').textContent = c.adiados || 0;
   $('#stQualificados').textContent = c.qualificados || 0;
   const pct = Math.min(100, Math.round(((c.qualificados || 0) / job.target) * 100));
   $('#meterFill').style.width = pct + '%';

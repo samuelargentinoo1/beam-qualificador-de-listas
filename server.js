@@ -64,7 +64,7 @@ app.post('/api/generate', (req, res) => {
     query: query || `${seg} de ${cid}`,
     segment: seg, city: cid, uf: (uf || '').toUpperCase().slice(0, 2),
     target: tgt,
-    counts: { capturados: 0, limpos: 0, qualificados: 0, descartados: 0, jaEntregues: 0 },
+    counts: { capturados: 0, limpos: 0, qualificados: 0, descartados: 0, jaEntregues: 0, adiados: 0 },
     log: [],
     cancel: false,
     startedAt: new Date().toISOString(),
