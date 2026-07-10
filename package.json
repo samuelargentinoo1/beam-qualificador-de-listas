@@ -4,10 +4,12 @@
   "private": true,
   "description": "Ferramenta de qualificação de listas — BeamBrocker + Babuya. Gera listas de leads qualificados (dados cruzados) a partir de segmento + cidade.",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "worker": "node worker.js"
   },
   "dependencies": {
     "express": "^4.19.2",
-    "playwright-core": "^1.47.0"
+    "playwright-core": "^1.47.0",
+    "@supabase/supabase-js": "^2.45.0"
   }
 }

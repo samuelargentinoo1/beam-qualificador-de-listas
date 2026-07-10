@@ -4,17 +4,37 @@ Ferramenta interna **BeamBrocker + Babuya** que automatiza o processo de montage
 (doc: *Processo de montagem de lista BeamBrocker+Babuya*): captura no Google Maps → limpeza → cruzamento
 de dados (site ✚ CNPJ/QSA ✚ Instagram) → lista final + CSV pronto para importar no Pipedrive.
 
-## Como usar
+## Como usar (no computador — jeito fácil)
 
-```bash
-npm start
+**Duplo clique em `Iniciar Ferramenta.command`** — instala o que precisar, liga tudo e abre
+**http://localhost:3010**. Para desligar: `Parar Ferramenta.command`. (Via terminal: `npm start`.)
+
+Na tela: digite na barra (ex.: `imobiliárias de Curitiba`), confira a UF e clique **Gerar 60 leads**.
+Durante a geração uma janela do Chrome fica aberta trabalhando — se aparecer captcha, resolva nela.
+
+> Requisitos: Node 18+ e Google Chrome. A geração roda **no seu computador** de propósito:
+> IP residencial + janela do Chrome passam pelos bloqueios anti-robô que derrubam servidores na nuvem.
+
+## Painel na nuvem (Vercel + Supabase)
+
+O mesmo repositório vira um **painel acessível de qualquer lugar**: a Vercel serve a interface e as APIs,
+o Supabase guarda fila/histórico/leads, e o **worker no seu computador** executa as gerações.
+
+```
+painel (Vercel) → fila (Supabase) → worker no seu Mac → leads voltam pro Supabase → download no painel
 ```
 
-Abra **http://localhost:3010**, digite na barra de pesquisa (ex.: `imobiliárias de São José do Rio Preto`),
-confira a UF e clique em **Gerar 60 leads**. Acompanhe o funil ao vivo; ao final, baixe os arquivos.
+Configuração (1x):
+1. **Supabase** → SQL Editor → cole o conteúdo de `supabase-schema.sql` → Run.
+2. **Vercel** → Settings → Environment Variables: confirme `SUPABASE_URL` e
+   `SUPABASE_SERVICE_ROLE_KEY` (a integração Supabase já cria) e adicione **`APP_PASSWORD`**
+   (a senha do painel). Redeploy.
+3. **No computador**: copie `.env.example` para `.env`, preencha com URL e service_role do
+   Supabase, e rode o `Iniciar Ferramenta.command` — o worker liga junto e fica vigiando a fila.
 
-> Requisitos: Node 18+ e Google Chrome instalado (a ferramenta usa o Chrome via Playwright).
-> Para ver o navegador trabalhando: `HEADFUL=1 npm start`.
+Pedidos feitos no painel ficam **na fila** até o computador com o worker estar ligado.
+No painel da nuvem, os downloads disponíveis são a **Lista Final** e o **CSV Pipedrive**
+(gerados direto do banco); os demais arquivos (bruta/limpa/descartes) ficam no computador.
 
 ## O que a ferramenta entrega
 

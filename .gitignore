@@ -21,3 +21,6 @@ server.log
 # sistema
 .DS_Store
 .claude/
+
+# segredos do Supabase (NUNCA subir)
+.env

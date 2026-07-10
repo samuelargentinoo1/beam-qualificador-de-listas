@@ -1,7 +1,25 @@
 'use strict';
-/* Front do Qualificador de Listas — Beam + Babuya */
+/* Front do Qualificador de Listas — Beam + Babuya
+   Funciona nos dois modos: local (localhost:3010) e painel na nuvem (Vercel). */
 
 const $ = sel => document.querySelector(sel);
+
+// ---------- senha do painel (só a nuvem exige; o local ignora) ----------
+const getPass = () => localStorage.getItem('appPass') || '';
+const passQS = () => (getPass() ? `?pass=${encodeURIComponent(getPass())}` : '');
+
+async function api(path, opts = {}) {
+  opts.headers = { ...(opts.headers || {}), 'x-app-pass': getPass() };
+  const r = await fetch(path, opts);
+  if (r.status === 401) {
+    const senha = prompt('🔒 Senha do painel:');
+    if (senha != null && senha !== '') {
+      localStorage.setItem('appPass', senha);
+      return api(path, opts); // tenta de novo com a senha nova
+    }
+  }
+  return r;
+}
 
 // ------------------------------------------------------------------- tabs
 document.querySelectorAll('.tab').forEach(btn => {
@@ -31,7 +49,7 @@ $('#searchForm').addEventListener('submit', async e => {
 
   $('#btnGerar').disabled = true;
   try {
-    const r = await fetch('/api/generate', {
+    const r = await api('/api/generate', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     });
     const j = await r.json();
@@ -47,7 +65,7 @@ $('#searchForm').addEventListener('submit', async e => {
 });
 
 $('#btnCancelar').addEventListener('click', async () => {
-  await fetch('/api/job/cancel', { method: 'POST' });
+  await api('/api/job/cancel', { method: 'POST' });
 });
 
 $('#btnNova').addEventListener('click', () => {
@@ -62,7 +80,7 @@ async function pollJob() {
   clearInterval(pollTimer);
   pollTimer = setInterval(async () => {
     try {
-      const r = await fetch('/api/job/active');
+      const r = await api('/api/job/active');
       const { job } = await r.json();
       if (!job) return;
       renderJob(job);
@@ -77,7 +95,8 @@ async function pollJob() {
 function renderJob(job) {
   show('#progress');
   $('#progTitle').textContent =
-    job.status === 'rodando' ? `Gerando lista — ${etapa(job.stage)}` : `Status: ${job.status}`;
+    job.queued || job.status === 'na_fila' ? '🕐 Na fila — aguardando o computador de geração…'
+    : job.status === 'rodando' ? `Gerando lista — ${etapa(job.stage)}` : `Status: ${job.status}`;
   $('#progQuery').textContent = `"${job.query}" · meta: ${job.target} leads qualificados`;
   const c = job.counts || {};
   $('#stCapturados').textContent = c.capturados || 0;
@@ -121,7 +140,7 @@ function renderDone(job) {
 function downloadsHtml(r) {
   const has = kind => !r.files || !!r.files[kind];
   const link = (kind, label, cls = '') => has(kind)
-    ? `<a class="dl ${cls}" href="/api/lists/${r.id}/file/${kind}">⬇ ${label}</a>` : '';
+    ? `<a class="dl ${cls}" href="/api/lists/${r.id}/file/${kind}${passQS()}">⬇ ${label}</a>` : '';
   return [
     link('final', 'Lista Final (cruzada)', 'primary'),
     link('pipedrive', 'CSV Pipedrive'),
@@ -143,7 +162,7 @@ function etapa(stage) {
 
 // -------------------------------------------------------------- minhas listas
 async function loadLists() {
-  const r = await fetch('/api/lists');
+  const r = await api('/api/lists');
   const { lists, deliveredByKey } = await r.json();
   const wrap = $('#listas');
   wrap.innerHTML = '';
@@ -176,7 +195,7 @@ function showError(msg) { $('#formError').textContent = msg; show('#formError');
 // retoma job em andamento se a página recarregar
 (async () => {
   try {
-    const r = await fetch('/api/job/active');
+    const r = await api('/api/job/active');
     const { job } = await r.json();
     if (job && job.status === 'rodando') { show('#progress'); pollJob(); }
     else if (job && job.result) { renderDone(job); }
