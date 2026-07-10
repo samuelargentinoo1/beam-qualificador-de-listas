@@ -32,16 +32,28 @@ function jobView(job) {
 }
 
 // --------------------------------------------------------------- parse query
-// "imobiliárias de são josé do rio preto" → segmento + cidade (1º " de "/" em ")
+// Aceita: "imobiliárias de são josé do rio preto", "imobiliárias em curitiba",
+// "imobiliárias, maringá", "imobiliárias curitiba" (sem conector).
 function parseQuery(q) {
-  const m = String(q || '').trim().match(/^(.*?)\s+(?:de|em)\s+(.+)$/i);
-  if (!m) return null;
-  return { segment: m[1].trim(), city: m[2].trim() };
+  let s = String(q || '').trim()
+    .replace(/^(gerar|quero|preciso de|lista de|listas de|leads de)\s+/i, '');
+  // 1) conector explícito " de " / " em "
+  let m = s.match(/^(.*?)\s+(?:de|em)\s+(.+)$/i);
+  if (m) return { segment: m[1].trim(), city: m[2].trim() };
+  // 2) vírgula ou hífen: "imobiliárias, maringá"
+  m = s.match(/^([^,\-]+)[,\-]\s*(.+)$/);
+  if (m) return { segment: m[1].trim(), city: m[2].trim() };
+  // 3) sem conector: 1ª palavra = segmento, resto = cidade
+  m = s.match(/^(\S+)\s+(.+)$/);
+  if (m) return { segment: m[1].trim(), city: m[2].trim() };
+  return null;
 }
 
 // -------------------------------------------------------------------- rotas
 app.post('/api/generate', (req, res) => {
+  console.log(`[api] pedido de geração: ${JSON.stringify(req.body || {})}`);
   if (activeJob && activeJob.status === 'rodando') {
+    console.log('[api] recusado: já existe geração em andamento');
     return res.status(409).json({ error: 'Já existe uma geração em andamento. Aguarde ou cancele.' });
   }
   const { query, segment, city, uf, target } = req.body || {};
@@ -51,8 +63,9 @@ app.post('/api/generate', (req, res) => {
     if (p) { seg = seg || p.segment; cid = cid || p.city; }
   }
   if (!seg || !cid) {
+    console.log(`[api] recusado: não entendi segmento/cidade em "${query}"`);
     return res.status(400).json({
-      error: 'Não entendi o segmento e a cidade. Use o formato "imobiliárias de São José do Rio Preto" ou preencha os campos separados.',
+      error: `Não entendi o segmento e a cidade em "${query}". Escreva no formato "SEGMENTO de CIDADE" — ex.: "imobiliárias de Curitiba".`,
     });
   }
   const tgt = Math.max(1, Math.min(100, parseInt(target, 10) || 60));
