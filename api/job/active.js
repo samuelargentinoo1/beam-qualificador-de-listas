@@ -39,7 +39,8 @@ module.exports = async (req, res) => {
       counts: job.counts || {},
       log: job.log || [],
       startedAt: job.started_at,
-      result: job.result || null,
+      // no painel da nuvem só existem os downloads gerados do banco (Final + Pipedrive)
+      result: job.result ? { ...job.result, files: { final: true, pipedrive: true } } : null,
       error: job.error || null,
       queued: job.status === 'na_fila',
       queueCount: naFila || 0,
