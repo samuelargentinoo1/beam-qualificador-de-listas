@@ -7,16 +7,26 @@ module.exports = async (req, res) => {
   const db = supa();
   if (!db) return needDb(res);
 
+  // prioridade de exibição: RODANDO > próximo da fila (mais antigo) > último finalizado
   let { data: job } = await db.from('jobs')
-    .select('*').in('status', ['na_fila', 'rodando', 'cancelar'])
-    .order('created_at', { ascending: false }).limit(1).maybeSingle();
+    .select('*').in('status', ['rodando', 'cancelar'])
+    .order('created_at', { ascending: true }).limit(1).maybeSingle();
 
+  if (!job) {
+    const r = await db.from('jobs')
+      .select('*').eq('status', 'na_fila')
+      .order('created_at', { ascending: true }).limit(1).maybeSingle();
+    job = r.data;
+  }
   if (!job) {
     const r = await db.from('jobs')
       .select('*').order('created_at', { ascending: false }).limit(1).maybeSingle();
     job = r.data;
   }
   if (!job) return res.json({ job: null });
+
+  const { count: naFila } = await db.from('jobs')
+    .select('id', { count: 'exact', head: true }).eq('status', 'na_fila');
 
   res.json({
     job: {
@@ -32,6 +42,7 @@ module.exports = async (req, res) => {
       result: job.result || null,
       error: job.error || null,
       queued: job.status === 'na_fila',
+      queueCount: naFila || 0,
     },
   });
 };

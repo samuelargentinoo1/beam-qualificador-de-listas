@@ -108,9 +108,10 @@ async function pollJob() {
 
 function renderJob(job) {
   show('#progress');
+  const filaExtra = job.queueCount > 1 ? ` (+${job.queueCount - 1} na fila)` : '';
   $('#progTitle').textContent =
-    job.queued || job.status === 'na_fila' ? '🕐 Na fila — aguardando o computador de geração…'
-    : job.status === 'rodando' ? `Gerando lista — ${etapa(job.stage)}` : `Status: ${job.status}`;
+    job.queued || job.status === 'na_fila' ? `🕐 Na fila${filaExtra} — aguardando o computador de geração…`
+    : job.status === 'rodando' ? `Gerando lista — ${etapa(job.stage)}${job.queueCount ? ` · fila: +${job.queueCount}` : ''}` : `Status: ${job.status}`;
   $('#progQuery').textContent = `"${job.query}" · meta: ${job.target} leads qualificados`;
   const c = job.counts || {};
   $('#stCapturados').textContent = c.capturados || 0;
