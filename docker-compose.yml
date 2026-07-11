@@ -5,6 +5,7 @@ services:
   beam:
     build: .
     container_name: beam-qualificador
+    init: true                      # limpa processos-filho do Chrome direitinho
     restart: unless-stopped         # volta sozinho em reboot/queda
     env_file: .env                  # Supabase + Moskit (nunca vai pro git)
     shm_size: '1gb'                 # Chrome precisa de /dev/shm decente
