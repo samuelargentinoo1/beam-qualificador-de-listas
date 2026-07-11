@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Beam — Qualificador de Listas</title>
+  <title>BeamBroker — Qualificador de Listas</title>
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡️</text></svg>" />
 </head>
@@ -12,26 +12,33 @@
 
   <header>
     <div class="brand">
-      <!-- LOGO: troque este SVG pelo logo oficial da Beam (public/logo.svg) -->
-      <svg class="logo" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- LOGO BEAMBROKER: se existir public/logo.png (arquivo oficial), ele assume;
+           senão fica o ícone SVG abaixo (feixes verdes da marca). -->
+      <img src="logo.png" class="logo" alt="BeamBroker" style="display:none;width:auto"
+           onload="this.style.display='block';document.getElementById('logoFallback').style.display='none'"
+           onerror="this.remove()" />
+      <svg id="logoFallback" class="logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <linearGradient id="g" x1="0" y1="34" x2="34" y2="0">
-            <stop offset="0" stop-color="var(--accent-1)"/>
-            <stop offset="1" stop-color="var(--accent-2)"/>
+          <linearGradient id="bg1" x1="0" y1="100" x2="100" y2="0">
+            <stop offset="0" stop-color="#2ee06e"/>
+            <stop offset="1" stop-color="#93f7b4"/>
           </linearGradient>
         </defs>
-        <rect x="2" y="2" width="30" height="30" rx="9" fill="url(#g)"/>
-        <path d="M9 25 L25 9 M9 17 L17 9 M17 25 L25 17" stroke="white" stroke-width="2.6" stroke-linecap="round"/>
+        <g fill="url(#bg1)" stroke="url(#bg1)" stroke-width="8" stroke-linejoin="round">
+          <path d="M16 10 L46 10 L72 32 L46 32 Z"/>
+          <path d="M16 40 L56 40 L88 64 L50 64 Z"/>
+          <path d="M16 72 L36 72 L54 88 L16 92 Z"/>
+        </g>
       </svg>
       <div class="brand-text">
-        <strong>beam</strong><span>qualificador de listas</span>
+        <strong class="wordmark">BEAM<em>BROKER</em></strong><span>qualificador de listas</span>
       </div>
     </div>
     <nav>
       <button class="tab active" data-tab="gerar">Gerar lista</button>
       <button class="tab" data-tab="listas">Minhas listas</button>
     </nav>
-    <div class="brand-partner">beam <em>+</em> babuya</div>
+    <div class="brand-partner">beam<em>broker</em> + babuya</div>
   </header>
 
   <main>
@@ -105,7 +112,7 @@
     </section>
   </main>
 
-  <footer>Ferramenta interna Beam + Babuya · dados cruzados: site ✚ CNPJ (QSA) ✚ Instagram confirmado no site</footer>
+  <footer>Ferramenta interna BeamBroker + Babuya · dados cruzados: site ✚ CNPJ (QSA) ✚ Instagram confirmado no site</footer>
 
   <script src="app.js"></script>
 </body>

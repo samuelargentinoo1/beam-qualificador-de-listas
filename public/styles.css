@@ -1,16 +1,17 @@
 /* ============================================================
-   IDENTIDADE VISUAL — BEAM (placeholder configurável)
-   Troque as variáveis abaixo pelas cores oficiais da Beam.
+   IDENTIDADE VISUAL — BEAMBROKER (oficial)
+   Verde em degradê sobre fundo escuro, conforme a logo da marca.
    ============================================================ */
 :root {
-  --bg: #0a0e1a;            /* fundo */
-  --bg-card: #10162a;       /* cartões */
-  --bg-card-2: #151d36;
-  --line: #232c4a;          /* bordas */
-  --text: #eef1fb;          /* texto principal */
-  --muted: #8b93b3;         /* texto secundário */
-  --accent-1: #4f7dff;      /* gradiente do "feixe" — início */
-  --accent-2: #a855f7;      /* gradiente do "feixe" — fim */
+  --bg: #060d09;            /* fundo quase-preto esverdeado */
+  --bg-card: #0c1712;       /* cartões */
+  --bg-card-2: #12211a;
+  --line: #1e3a2b;          /* bordas */
+  --text: #ecfdf3;          /* texto principal */
+  --muted: #86a795;         /* texto secundário */
+  --accent-1: #2ee06e;      /* verde BeamBroker — início do degradê */
+  --accent-2: #93f7b4;      /* verde claro — fim do degradê */
+  --on-accent: #04150a;     /* texto sobre o verde (contraste) */
   --good: #34d399;
   --bad: #f87171;
   --warn: #fbbf24;
@@ -43,9 +44,15 @@ header {
   backdrop-filter: blur(8px);
 }
 .brand { display: flex; align-items: center; gap: 12px; }
-.logo { width: 34px; height: 34px; }
+.logo { width: 34px; height: 34px; max-width: 130px; }
+img.logo { width: auto; }
 .brand-text { display: flex; flex-direction: column; line-height: 1.1; }
-.brand-text strong { font-size: 20px; letter-spacing: .5px; }
+.brand-text strong { font-size: 19px; letter-spacing: 1.5px; font-weight: 800; }
+.wordmark em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
 .brand-text span { font-size: 11px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
 nav { display: flex; gap: 8px; margin-left: 12px; }
 .tab {
@@ -89,10 +96,10 @@ h1 { font-size: 34px; font-weight: 700; letter-spacing: -.5px; }
   flex: 1; background: none; border: none; outline: none;
   color: var(--text); font-size: 16px; font-family: inherit; min-width: 0;
 }
-.search input::placeholder { color: #5b6485; }
+.search input::placeholder { color: #4e6b5b; }
 .search button {
-  flex: none; border: none; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 15px;
-  color: #fff; padding: 12px 22px; border-radius: 999px;
+  flex: none; border: none; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 15px;
+  color: var(--on-accent); padding: 12px 22px; border-radius: 999px;
   background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
   transition: filter .15s, transform .05s;
 }
@@ -149,14 +156,14 @@ h1 { font-size: 34px; font-weight: 700; letter-spacing: -.5px; }
 }
 #meterText {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 600; text-shadow: 0 1px 4px rgba(0,0,0,.5);
+  font-size: 13px; font-weight: 700; color: #fff; mix-blend-mode: difference;
 }
 
 .log {
-  background: #070a13; border: 1px solid var(--line); border-radius: 12px;
+  background: #040a06; border: 1px solid var(--line); border-radius: 12px;
   padding: 14px; margin-top: 14px; max-height: 260px; overflow-y: auto;
   font-family: 'SF Mono', ui-monospace, Menlo, monospace; font-size: 12px; line-height: 1.7;
-  color: #9aa4c7; white-space: pre-wrap; word-break: break-word;
+  color: #8fb8a1; white-space: pre-wrap; word-break: break-word;
 }
 
 /* resultado */
@@ -170,7 +177,7 @@ h1 { font-size: 34px; font-weight: 700; letter-spacing: -.5px; }
 .dl:hover { border-color: var(--accent-1); }
 .dl.primary {
   background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-  border: none; font-weight: 600; color: #fff;
+  border: none; font-weight: 700; color: var(--on-accent);
 }
 
 /* minhas listas */
