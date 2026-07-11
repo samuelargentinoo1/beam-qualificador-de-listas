@@ -1,0 +1,15 @@
+# Beam — Qualificador de Listas · roda ISOLADO num container próprio.
+# Não expõe nenhuma porta (o worker só faz chamadas de SAÍDA pro Supabase),
+# então não conflita com nada que já exista no servidor.
+services:
+  beam:
+    build: .
+    container_name: beam-qualificador
+    restart: unless-stopped         # volta sozinho em reboot/queda
+    env_file: .env                  # Supabase + Moskit (nunca vai pro git)
+    shm_size: '1gb'                 # Chrome precisa de /dev/shm decente
+    volumes:
+      - ./data:/app/data            # ledger anti-repetido + perfil do Chrome
+      - ./listas:/app/listas        # CSVs gerados
+    environment:
+      - TZ=America/Sao_Paulo
