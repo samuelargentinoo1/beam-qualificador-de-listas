@@ -5,6 +5,15 @@
 const $ = sel => document.querySelector(sel);
 
 // ---------- senha do painel (só a nuvem exige; o local ignora) ----------
+// LINK MÁGICO: abra o painel com  …vercel.app/#k=SENHA  e nunca mais digite nada —
+// a senha entra sozinha, fica salva no navegador e some da barra de endereço.
+(() => {
+  const m = location.hash.match(/[#&]k=([^&]+)/);
+  if (m) {
+    localStorage.setItem('appPass', decodeURIComponent(m[1]).trim());
+    history.replaceState(null, '', location.pathname); // limpa o link
+  }
+})();
 const getPass = () => localStorage.getItem('appPass') || '';
 const passQS = () => (getPass() ? `?pass=${encodeURIComponent(getPass())}` : '');
 

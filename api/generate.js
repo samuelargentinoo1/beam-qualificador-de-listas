@@ -13,11 +13,11 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'Digite o que você quer, ex.: "imobiliárias de Curitiba".' });
   }
 
-  // uma geração por vez (na fila ou rodando)
-  const { data: abertos } = await db.from('jobs')
-    .select('id,status').in('status', ['na_fila', 'rodando', 'cancelar']).limit(1);
-  if (abertos && abertos.length) {
-    return res.status(409).json({ error: 'Já existe uma geração na fila ou em andamento. Aguarde ou cancele.' });
+  // FILA: aceita vários pedidos (a equipe toda pode pedir); roda um por vez, em ordem.
+  const { data: fila } = await db.from('jobs')
+    .select('id').eq('status', 'na_fila');
+  if ((fila || []).length >= 10) {
+    return res.status(429).json({ error: 'A fila já tem 10 pedidos aguardando — deixa ela andar antes de pedir mais.' });
   }
 
   const { data, error } = await db.from('jobs').insert({
@@ -28,5 +28,5 @@ module.exports = async (req, res) => {
   }).select('id').single();
 
   if (error) return res.status(500).json({ error: error.message });
-  res.json({ jobId: data.id, queued: true });
+  res.json({ jobId: data.id, queued: true, position: (fila || []).length + 1 });
 };
