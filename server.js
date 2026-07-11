@@ -5,6 +5,16 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+
+// carrega o .env (Moskit, Supabase etc.) sem dependência externa
+(() => {
+  const envPath = path.join(__dirname, '.env');
+  if (!fs.existsSync(envPath)) return;
+  for (const line of fs.readFileSync(envPath, 'utf8').split('\n')) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
+  }
+})();
 const { runJob, LISTS_PATH } = require('./lib/runner');
 const ledgerLib = require('./lib/ledger');
 const { readJson, titleCase } = require('./lib/util');
