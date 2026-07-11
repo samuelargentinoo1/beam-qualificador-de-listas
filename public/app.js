@@ -12,11 +12,16 @@ async function api(path, opts = {}) {
   opts.headers = { ...(opts.headers || {}), 'x-app-pass': getPass() };
   const r = await fetch(path, opts);
   if (r.status === 401) {
-    const senha = prompt('🔒 Senha do painel:');
-    if (senha != null && senha !== '') {
-      localStorage.setItem('appPass', senha);
+    const senha = prompt(
+      getPass()
+        ? '🔒 Senha incorreta. Digite a senha do painel (diferencia MAIÚSCULAS/minúsculas):'
+        : '🔒 Senha do painel:'
+    );
+    if (senha != null && senha.trim() !== '') {
+      localStorage.setItem('appPass', senha.trim()); // trim: mata espaço de colagem
       return api(path, opts); // tenta de novo com a senha nova
     }
+    localStorage.removeItem('appPass'); // cancelou: limpa p/ pedir de novo depois
   }
   return r;
 }
