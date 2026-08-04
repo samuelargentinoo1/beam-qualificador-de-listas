@@ -45,7 +45,7 @@ Só entram na lista final leads **"prontos"** (regra da casa: *só lead com site
 3. **Decisor real** — sócio-administrador extraído do QSA (cnpj.biz), com dupla checagem:
    a cidade do CNPJ tem que bater e o nome tem que bater com a razão social.
 4. **Regras de limpeza do processo** — corta <10 avaliações, sem telefone, sem site, corretor solo,
-   duplicados; franquias/redes entram marcadas com `F - `.
+   **construtora** (fora do público-alvo), duplicados; franquias/redes entram marcadas com `F - `.
 
 ## Mecanismo anti-repetido (ledger)
 
