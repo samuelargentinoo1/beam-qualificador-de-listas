@@ -2,10 +2,13 @@
 
 ## O link (salve nos favoritos)
 
-**https://beam-qualificador-de-listas.vercel.app/#k=BeamBabuya-4140**
+**https://beam-qualificador-de-listas.vercel.app/**
 
-Use sempre ESTE link (a chave de acesso vai embutida — não pede senha).
 Funciona de qualquer computador ou celular, a qualquer hora.
+
+Na primeira vez o painel pede uma **senha** — peça ao Samuel (ela não fica escrita
+aqui: este repositório é público). Depois de digitar uma vez, o navegador guarda e
+não pergunta mais naquele aparelho.
 
 ## Como pedir uma lista
 
