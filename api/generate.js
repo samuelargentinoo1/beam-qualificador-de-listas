@@ -76,8 +76,10 @@ module.exports = async (req, res) => {
   const { data, error } = await db.from('jobs').insert(registro).select('id').single();
 
   if (error) {
-    // Coluna nova ainda não criada no banco: erro claro em vez de "column does not exist".
-    if (/column .*(rows|origem)/i.test(error.message)) {
+    // Coluna nova ainda não criada no banco: erro claro em vez do erro cru do
+    // PostgREST ("column ... does not exist" OU "Could not find the '...' column
+    // of 'jobs' in the schema cache" — a ordem das palavras varia).
+    if (/column/i.test(error.message) && /rows|origem/i.test(error.message)) {
       return res.status(500).json({
         error: 'O banco ainda não tem as colunas do modo planilha. Rode no SQL Editor do Supabase: ' +
                'alter table jobs add column if not exists rows jsonb, add column if not exists origem text;',
