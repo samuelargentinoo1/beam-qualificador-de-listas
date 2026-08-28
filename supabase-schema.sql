@@ -9,6 +9,8 @@ create table if not exists jobs (
   status text not null default 'na_fila',  -- na_fila | rodando | concluído | erro | cancelar | cancelado
   query text,
   uf text,
+  origem text default 'maps',              -- maps | planilha
+  rows jsonb,                              -- modo planilha: [{ name, cnpj, cnpjDigits }]
   target int default 60,
   stage text,
   counts jsonb default '{}'::jsonb,
@@ -55,6 +57,15 @@ create table if not exists leads (
 );
 create index if not exists leads_list_idx on leads(list_id);
 create index if not exists leads_praca_idx on leads(praca);
+
+-- ------------------------------------------------------------
+-- MIGRAÇÃO — para bancos criados antes do modo planilha.
+-- O "create table if not exists" acima não altera tabela que já existe,
+-- então estas linhas garantem as colunas novas. Rodar de novo não faz mal.
+-- ------------------------------------------------------------
+alter table jobs  add column if not exists origem text default 'maps';
+alter table jobs  add column if not exists rows jsonb;
+alter table lists add column if not exists origem text default 'maps';
 
 -- Segurança: RLS ligado SEM políticas públicas.
 -- Só a service_role (usada pelas APIs da Vercel e pelo worker) acessa.

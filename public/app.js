@@ -48,8 +48,46 @@ document.querySelectorAll('.tab').forEach(btn => {
 
 // --------------------------------------------------------------- gerar lista
 $('#target').addEventListener('input', () => {
-  $('#targetLabel').textContent = $('#target').value || '60';
+  // no modo planilha o botão não tem o contador (o alvo é a planilha inteira)
+  const label = $('#targetLabel');
+  if (label) label.textContent = $('#target').value || '60';
 });
+
+// ------------------------------------------------------- planilha (nome+CNPJ)
+// O arquivo é lido aqui só pra virar texto; quem valida colunas e CNPJ é o
+// servidor (lib/importar.js), pra ter UMA regra só — e não duas divergindo.
+let planilhaTexto = null;
+
+$('#btnPlanilha').addEventListener('click', () => $('#planilha').click());
+
+$('#planilha').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  hide('#formError');
+  planilhaTexto = await file.text();
+  const linhas = planilhaTexto.split('\n').filter(l => l.trim()).length;
+  $('#planilhaNome').textContent = `${file.name} — ~${Math.max(0, linhas - 1)} linhas`;
+  show('#planilhaInfo');
+  $('#btnPlanilha').classList.add('hidden');
+  $('#query').placeholder = 'ex.: imobiliárias  (só o segmento — a cidade vem do CNPJ)';
+  atualizaBotao();
+});
+
+$('#btnTirarPlanilha').addEventListener('click', () => {
+  planilhaTexto = null;
+  $('#planilha').value = '';
+  hide('#planilhaInfo');
+  $('#btnPlanilha').classList.remove('hidden');
+  $('#query').placeholder = 'ex.: imobiliárias de São José do Rio Preto';
+  atualizaBotao();
+});
+
+function atualizaBotao() {
+  $('#btnGerar').textContent = planilhaTexto ? 'Qualificar planilha' : '';
+  if (!planilhaTexto) {
+    $('#btnGerar').innerHTML = 'Gerar <span id="targetLabel">' + ($('#target').value || '60') + '</span> leads';
+  }
+}
 
 $('#searchForm').addEventListener('submit', async e => {
   e.preventDefault();
@@ -59,7 +97,15 @@ $('#searchForm').addEventListener('submit', async e => {
     uf: $('#uf').value.trim(),
     target: parseInt($('#target').value, 10) || 60,
   };
-  if (!body.query) return showError('Digite o que você quer, ex.: "imobiliárias de São José do Rio Preto".');
+  if (planilhaTexto) {
+    body.planilha = planilhaTexto;
+    delete body.target; // planilha: o alvo é qualificar tudo que veio nela
+  }
+  if (!body.query) {
+    return showError(planilhaTexto
+      ? 'Escreva o segmento da planilha, ex.: "imobiliárias" — é ele que forma a praça do anti-repetido.'
+      : 'Digite o que você quer, ex.: "imobiliárias de São José do Rio Preto".');
+  }
 
   $('#btnGerar').disabled = true;
   try {
@@ -68,6 +114,11 @@ $('#searchForm').addEventListener('submit', async e => {
     });
     const j = await r.json();
     if (!r.ok) return showError(j.error || 'Erro ao iniciar.');
+    if (j.planilha) {
+      const d = j.planilha.descartadas;
+      $('#planilhaNome').textContent =
+        `${j.planilha.validas} empresa(s) na fila` + (d ? ` · ${d} linha(s) sem CNPJ válido, ignorada(s)` : '');
+    }
     show('#progress'); hide('#done');
     $('#hero').scrollIntoView({ behavior: 'smooth', block: 'start' });
     pollJob();
@@ -112,7 +163,13 @@ function renderJob(job) {
   $('#progTitle').textContent =
     job.queued || job.status === 'na_fila' ? `🕐 Na fila${filaExtra} — aguardando o computador de geração…`
     : job.status === 'rodando' ? `Gerando lista — ${etapa(job.stage)}${job.queueCount ? ` · fila: +${job.queueCount}` : ''}` : `Status: ${job.status}`;
-  $('#progQuery').textContent = `"${job.query}" · meta: ${job.target} leads qualificados`;
+  const daPlanilha = job.origem === 'planilha' || job.linhasPlanilha > 0;
+  $('#progQuery').textContent = daPlanilha
+    ? `"${job.query}" · planilha com ${job.linhasPlanilha || job.target} empresa(s)`
+    : `"${job.query}" · meta: ${job.target} leads qualificados`;
+  // no modo planilha nada é "capturado no Maps" — são as linhas que você subiu
+  const rotuloCap = $('#stCapturados').parentElement.querySelector('label');
+  if (rotuloCap) rotuloCap.innerHTML = daPlanilha ? 'linhas<br>da planilha' : 'capturados<br>no Maps';
   const c = job.counts || {};
   $('#stCapturados').textContent = c.capturados || 0;
   $('#stLimpos').textContent = c.limpos || 0;

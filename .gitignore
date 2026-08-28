@@ -17,6 +17,8 @@ server.log
 .playwright-mcp/
 *.png
 *.jpeg
+# exceção: a logo oficial do painel PODE subir
+!public/logo.png
 
 # sistema
 .DS_Store

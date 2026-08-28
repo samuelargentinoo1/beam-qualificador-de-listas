@@ -69,7 +69,7 @@ async function syncResult(job, entry) {
   await db.from('lists').upsert({
     id: entry.id, n: entry.n, date: entry.date, segment: entry.segment, city: entry.city,
     uf: entry.uf, key: entry.key, target: entry.target, delivered: entry.delivered,
-    status: entry.status, totals: entry.totals,
+    status: entry.status, totals: entry.totals, origem: entry.origem || 'maps',
   });
   const csvPath = entry.files && entry.files.final;
   if (csvPath && fs.existsSync(csvPath)) {
@@ -92,7 +92,9 @@ async function syncResult(job, entry) {
 
 // ---------- executa 1 job da fila
 async function runCloudJob(job) {
-  console.log(`[${stamp()}] ▶ executando pedido da nuvem: "${job.query}" (meta ${job.target})`);
+  const planilha = Array.isArray(job.rows) && job.rows.length ? job.rows : null;
+  console.log(`[${stamp()}] ▶ executando pedido da nuvem: "${job.query}" ` +
+    (planilha ? `(planilha com ${planilha.length} empresas)` : `(meta ${job.target})`));
   await db.from('jobs').update({ status: 'rodando', started_at: now(), stage: 'iniciando' }).eq('id', job.id);
 
   if (!await ensureLocal()) {
@@ -102,7 +104,11 @@ async function runCloudJob(job) {
 
   const kick = await fetch(LOCAL + '/api/generate', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: job.query, uf: job.uf, target: job.target }),
+    body: JSON.stringify({
+      query: job.query, uf: job.uf, target: job.target,
+      // modo planilha: os alvos (nome+CNPJ) já vêm no pedido da fila
+      rows: planilha || undefined,
+    }),
   });
   if (!kick.ok) {
     const e = await kick.json().catch(() => ({}));

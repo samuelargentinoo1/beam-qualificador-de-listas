@@ -61,6 +61,17 @@
           <label>Meta de leads <input id="target" type="number" min="1" max="100" value="60" /></label>
           <span class="hint">meta padrão: 60 contatos prontos/dia</span>
         </div>
+
+        <!-- Origem alternativa: planilha do banco (nome + CNPJ) no lugar do Maps -->
+        <div class="importar">
+          <input id="planilha" type="file" accept=".csv,.tsv,.txt,text/csv" hidden />
+          <button type="button" id="btnPlanilha" class="ghost">📄 Usar uma planilha (nome + CNPJ)</button>
+          <span class="hint">em vez de buscar no Maps, qualifica as empresas que você já tem</span>
+          <div id="planilhaInfo" class="planilha-info hidden">
+            <span id="planilhaNome"></span>
+            <button type="button" id="btnTirarPlanilha" class="linkish">remover</button>
+          </div>
+        </div>
         <p id="formError" class="error hidden"></p>
       </div>
 

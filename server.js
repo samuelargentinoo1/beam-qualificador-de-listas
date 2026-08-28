@@ -17,11 +17,13 @@ const fs = require('fs');
 })();
 const { runJob, LISTS_PATH } = require('./lib/runner');
 const ledgerLib = require('./lib/ledger');
+const { lerPlanilha } = require('./lib/importar');
 const { readJson, titleCase } = require('./lib/util');
 
 const app = express();
 const PORT = process.env.PORT || 3010;
-app.use(express.json());
+// 10mb: uma planilha do banco pode ter milhares de linhas de nome+CNPJ.
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ------------------------------------------------------------- estado do job
@@ -33,6 +35,9 @@ function jobView(job) {
   return {
     id: job.id, status: job.status, stage: job.stage,
     query: job.query, segment: job.segment, city: job.city, uf: job.uf, target: job.target,
+    // as linhas em si não vão no view (podem ser milhares) — só quantas são
+    origem: job.origem || 'maps',
+    linhasPlanilha: Array.isArray(job.rows) ? job.rows.length : 0,
     counts: job.counts,
     log: job.log.slice(-80),
     startedAt: job.startedAt,
@@ -66,29 +71,67 @@ app.post('/api/generate', (req, res) => {
     console.log('[api] recusado: já existe geração em andamento');
     return res.status(409).json({ error: 'Já existe uma geração em andamento. Aguarde ou cancele.' });
   }
-  const { query, segment, city, uf, target } = req.body || {};
+  const { query, segment, city, uf, target, rows, planilha } = req.body || {};
+
+  // MODO PLANILHA: os alvos vêm prontos (nome+CNPJ). Aceita as linhas já lidas
+  // (`rows`, é o que a nuvem manda) ou o CSV cru (`planilha`, útil em teste local).
+  let linhas = Array.isArray(rows) ? rows : null;
+  let infoPlanilha = null;
+  // "mandou planilha" ≠ "a planilha tem linhas boas": sem separar os dois, uma
+  // planilha toda inválida cairia no erro de segmento/cidade, que confunde.
+  const enviouPlanilha = !!(Array.isArray(rows) || (typeof planilha === 'string' && planilha.trim()));
+  if (!linhas && typeof planilha === 'string' && planilha.trim()) {
+    const lido = lerPlanilha(planilha);
+    if (lido.info && lido.info.erro) return res.status(400).json({ error: lido.info.erro });
+    linhas = lido.rows;
+    infoPlanilha = lido.info;
+    if (lido.descartes.length) console.log(`[api] planilha: ${lido.descartes.length} linha(s) descartada(s) na leitura`);
+    if (!lido.rows.length) {
+      const ex = lido.descartes.slice(0, 3).map(d => `${d.name}: ${d.reason}`).join(' · ');
+      return res.status(400).json({
+        error: `Nenhuma linha da planilha tem CNPJ válido.${ex ? ' Ex.: ' + ex : ''}`,
+      });
+    }
+  }
+  if (enviouPlanilha && (!linhas || !linhas.length)) {
+    return res.status(400).json({ error: 'A planilha não tem nenhuma linha com CNPJ válido.' });
+  }
+  const modoPlanilha = !!(linhas && linhas.length);
+
   let seg = segment, cid = city;
   if ((!seg || !cid) && query) {
     const p = parseQuery(query);
     if (p) { seg = seg || p.segment; cid = cid || p.city; }
   }
-  if (!seg || !cid) {
+  // No modo planilha a CIDADE é opcional: cada lead traz a sua, vinda da Receita.
+  // O segmento continua necessário — é ele que forma a praça do anti-repetido.
+  if (modoPlanilha) {
+    if (!seg) seg = String(query || '').trim() || 'empresas';
+  } else if (!seg || !cid) {
     console.log(`[api] recusado: não entendi segmento/cidade em "${query}"`);
     return res.status(400).json({
       error: `Não entendi o segmento e a cidade em "${query}". Escreva no formato "SEGMENTO de CIDADE" — ex.: "imobiliárias de Curitiba".`,
     });
   }
-  const tgt = Math.max(1, Math.min(100, parseInt(target, 10) || 60));
+  // Planilha: o alvo padrão é qualificar a planilha inteira (não a meta de 60).
+  const tgt = modoPlanilha
+    ? Math.max(1, Math.min(2000, parseInt(target, 10) || linhas.length))
+    : Math.max(1, Math.min(100, parseInt(target, 10) || 60));
 
   const job = {
     id: 'job_' + Date.now(),
     status: 'rodando',
     stage: 'iniciando',
-    query: query || `${seg} de ${cid}`,
-    segment: seg, city: cid, uf: (uf || '').toUpperCase().slice(0, 2),
+    query: query || (modoPlanilha ? `${seg} (planilha)` : `${seg} de ${cid}`),
+    segment: seg, city: cid || '', uf: (uf || '').toUpperCase().slice(0, 2),
     target: tgt,
+    rows: modoPlanilha ? linhas : null,
+    origem: modoPlanilha ? 'planilha' : 'maps',
     counts: { capturados: 0, limpos: 0, qualificados: 0, descartados: 0, jaEntregues: 0, adiados: 0 },
-    log: [],
+    log: infoPlanilha
+      ? [`[${new Date().toLocaleTimeString('pt-BR')}] Planilha lida: coluna de nome "${infoPlanilha.colunaNome}", ` +
+         `coluna de CNPJ "${infoPlanilha.colunaCnpj}" — ${linhas.length} empresa(s) válida(s).`]
+      : [],
     cancel: false,
     startedAt: new Date().toISOString(),
   };
