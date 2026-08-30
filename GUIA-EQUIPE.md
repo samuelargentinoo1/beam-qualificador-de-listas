@@ -2,7 +2,7 @@
 
 ## O link (salve nos favoritos)
 
-**http://179.197.66.225:8010/**
+**https://qualificador.beambroker.com.br/**
 
 (o endereço antigo `beam-qualificador-de-listas.vercel.app` redireciona sozinho pra cá —
 favoritos antigos continuam funcionando)

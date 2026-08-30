@@ -23,6 +23,8 @@ services:
     restart: unless-stopped
     env_file: .env                  # Supabase + APP_PASSWORD
     ports:
-      - "8010:8010"
+      # só loopback: quem atende a internet é o nginx do host, com HTTPS
+      # (https://qualificador.beambroker.com.br → proxy → 127.0.0.1:8010)
+      - "127.0.0.1:8010:8010"
     environment:
       - TZ=America/Sao_Paulo
