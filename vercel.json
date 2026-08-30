@@ -1,4 +1,5 @@
 {
-  "outputDirectory": "public",
-  "cleanUrls": true
+  "redirects": [
+    { "source": "/(.*)", "destination": "http://179.197.66.225:8010/$1", "permanent": false }
+  ]
 }

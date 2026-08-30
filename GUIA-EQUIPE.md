@@ -2,7 +2,10 @@
 
 ## O link (salve nos favoritos)
 
-**https://beam-qualificador-de-listas.vercel.app/**
+**http://179.197.66.225:8010/**
+
+(o endereço antigo `beam-qualificador-de-listas.vercel.app` redireciona sozinho pra cá —
+favoritos antigos continuam funcionando)
 
 Funciona de qualquer computador ou celular, a qualquer hora.
 

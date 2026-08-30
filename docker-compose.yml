@@ -1,6 +1,6 @@
-# Beam — Qualificador de Listas · roda ISOLADO num container próprio.
-# Não expõe nenhuma porta (o worker só faz chamadas de SAÍDA pro Supabase),
-# então não conflita com nada que já exista no servidor.
+# Beam — Qualificador de Listas · roda ISOLADO em containers próprios.
+# O worker não expõe porta nenhuma (só faz chamadas de SAÍDA pro Supabase).
+# O painel expõe SÓ a 8010 — 80/443 são do nginx dos outros sistemas do VPS.
 services:
   beam:
     build: .
@@ -12,5 +12,17 @@ services:
     volumes:
       - ./data:/app/data            # ledger anti-repetido + perfil do Chrome
       - ./listas:/app/listas        # CSVs gerados
+    environment:
+      - TZ=America/Sao_Paulo
+
+  # Painel web (substitui a Vercel): front + APIs de nuvem, falando com o Supabase.
+  painel:
+    build: .
+    container_name: beam-painel
+    command: ["node", "painel.js"]  # sem xvfb: aqui não tem Chrome
+    restart: unless-stopped
+    env_file: .env                  # Supabase + APP_PASSWORD
+    ports:
+      - "8010:8010"
     environment:
       - TZ=America/Sao_Paulo

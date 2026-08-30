@@ -9,9 +9,10 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-fund --no-audit
 
-# código
-COPY server.js worker.js ./
+# código (painel.js + api/ = painel web no VPS; server/worker = motor)
+COPY server.js worker.js painel.js ./
 COPY lib ./lib
+COPY api ./api
 COPY public ./public
 
 # Chromium roda em modo headful (melhor contra anti-bot) dentro do Xvfb.
