@@ -85,18 +85,26 @@ module.exports = async (req, res) => {
   };
   if (rows) { registro.rows = rows; registro.origem = 'planilha'; }
 
-  const { data, error } = await db.from('jobs').insert(registro).select('id').single();
+  let { data, error } = await db.from('jobs').insert(registro).select('id').single();
+
+  // O banco pode ser mais antigo que o código. Sem as colunas de quem pediu, o
+  // pedido ia parar de entrar na fila — então mandamos de novo com a informação
+  // dobrada dentro de counts (jsonb que já existe e está vazio na criação).
+  // Quando alguém rodar o supabase-schema.sql, o caminho de cima volta a valer.
+  if (error && /usuario|usuario_nome|moskit_user_id/i.test(error.message)) {
+    const { usuario, usuario_nome, moskit_user_id, ...semColunas } = registro;
+    semColunas.counts = { _pedido: { login: usuario, nome: usuario_nome, moskitId: moskit_user_id } };
+    ({ data, error } = await db.from('jobs').insert(semColunas).select('id').single());
+  }
 
   if (error) {
-    // Coluna nova ainda não criada no banco: erro claro em vez do erro cru do
+    // Coluna do modo planilha ainda não criada: erro claro em vez do erro cru do
     // PostgREST ("column ... does not exist" OU "Could not find the '...' column
     // of 'jobs' in the schema cache" — a ordem das palavras varia).
-    if (/column/i.test(error.message) && /rows|origem|usuario|moskit_user_id/i.test(error.message)) {
+    if (/column/i.test(error.message) && /rows|origem/i.test(error.message)) {
       return res.status(500).json({
-        error: 'O banco ainda não tem as colunas novas da tabela jobs. Rode no SQL Editor do Supabase: ' +
-               'alter table jobs add column if not exists rows jsonb, add column if not exists origem text, ' +
-               'add column if not exists usuario text, add column if not exists usuario_nome text, ' +
-               'add column if not exists moskit_user_id int;',
+        error: 'O banco ainda não tem as colunas do modo planilha. Rode no SQL Editor do Supabase: ' +
+               'alter table jobs add column if not exists rows jsonb, add column if not exists origem text;',
       });
     }
     return res.status(500).json({ error: error.message });

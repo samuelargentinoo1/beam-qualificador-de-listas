@@ -101,7 +101,12 @@ async function syncResult(job, entry) {
 // ---------- executa 1 job da fila
 async function runCloudJob(job) {
   const planilha = Array.isArray(job.rows) && job.rows.length ? job.rows : null;
-  const quem = job.usuario_nome || job.usuario || 'sem usuário (responsável padrão do .env)';
+  // quem pediu: colunas próprias ou, em banco antigo, dentro de counts._pedido
+  const pedido = (job.counts && job.counts._pedido) || {};
+  const usuarioNome = job.usuario_nome || job.usuario || pedido.nome || null;
+  const usuarioLogin = job.usuario || pedido.login || null;
+  const moskitId = job.moskit_user_id || pedido.moskitId || null;
+  const quem = usuarioNome || 'sem usuário (responsável padrão do .env)';
   console.log(`[${stamp()}] ▶ executando pedido da nuvem: "${job.query}" ` +
     (planilha ? `(planilha com ${planilha.length} empresas)` : `(meta ${job.target})`) +
     ` — pedido de ${quem}`);
@@ -119,8 +124,8 @@ async function runCloudJob(job) {
       // modo planilha: os alvos (nome+CNPJ) já vêm no pedido da fila
       rows: planilha || undefined,
       // quem pediu no painel → responsável dos leads no Moskit
-      usuario: job.usuario_nome || job.usuario || undefined,
-      moskitUserId: job.moskit_user_id || undefined,
+      usuario: usuarioNome || undefined,
+      moskitUserId: moskitId || undefined,
     }),
   });
   if (!kick.ok) {
@@ -145,11 +150,14 @@ async function runCloudJob(job) {
     }
 
     await db.from('jobs').update({
-      stage: local.stage, counts: local.counts, log: (local.log || []).slice(-80),
+      // mantém o _pedido no counts: em banco antigo é lá que mora quem pediu
+      stage: local.stage,
+      counts: pedido.nome ? { ...(local.counts || {}), _pedido: pedido } : local.counts,
+      log: (local.log || []).slice(-80),
     }).eq('id', job.id);
 
     if (['concluído', 'erro', 'cancelado'].includes(local.status)) {
-      if (local.result) await syncResult(job, local.result);
+      if (local.result) await syncResult({ ...job, usuario: usuarioLogin, usuario_nome: usuarioNome }, local.result);
       await db.from('jobs').update({
         status: local.status, result: local.result || null, error: local.error || null,
         finished_at: now(),

@@ -38,7 +38,9 @@ module.exports = async (req, res) => {
       target: job.target,
       origem: job.origem || 'maps',
       linhasPlanilha: Array.isArray(job.rows) ? job.rows.length : 0,
-      usuario: job.usuario_nome || job.usuario || null,   // quem pediu (responsável no Moskit)
+      // quem pediu (responsável no Moskit) — nas colunas próprias ou, em banco
+      // antigo, dentro de counts._pedido (veja api/generate.js)
+      usuario: job.usuario_nome || job.usuario || (job.counts && job.counts._pedido && job.counts._pedido.nome) || null,
       counts: job.counts || {},
       log: job.log || [],
       startedAt: job.started_at,
