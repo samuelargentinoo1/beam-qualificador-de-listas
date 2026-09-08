@@ -52,6 +52,10 @@ function pedirLogin(msg) {
 async function api(path, opts = {}) {
   opts.headers = { ...(opts.headers || {}), 'x-app-user': getUser(), 'x-app-pass': getPass() };
   const r = await fetch(path, opts);
+  if (r.status === 409) {
+    const j = await r.clone().json().catch(() => ({}));
+    if (j.setup) { await abrirSetup(); return api(path, opts); }
+  }
   if (r.status === 401) {
     const j = await r.json().catch(() => ({}));
     // primeira visita (nada salvo): tela limpa; com credencial salva: mostra o motivo
@@ -82,6 +86,124 @@ $('#btnSair').addEventListener('click', () => {
   location.reload();
 });
 
+// ---------------------------------------------------- primeiro acesso (setup)
+// Aparece só enquanto NÃO existe nenhum login. Cria o primeiro acesso pela tela.
+let setupAberto = null;
+function abrirSetup() {
+  if (setupAberto) return setupAberto;
+  setupAberto = new Promise(async resolve => {
+    hide('#login');
+    show('#setup');
+    // a lista de pessoas do Moskit demora — a tela já aparece e ela chega depois
+    fetch('/api/setup?pessoas=1')
+      .then(r => r.json())
+      .then(info => {
+        if (!info.exigeChave) hide('#setupChaveWrap');
+        preencheMoskit('#setupMoskit', info.pessoas || []);
+      })
+      .catch(() => preencheMoskit('#setupMoskit', []));
+    $('#setupForm').onsubmit = async e => {
+      e.preventDefault();
+      $('#setupMsg').textContent = '';
+      $('#setupBtn').disabled = true;
+      try {
+        const r = await fetch('/api/setup', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chave: $('#setupChave').value.trim(),
+            login: $('#setupLogin').value.trim().toLowerCase(),
+            senha: $('#setupSenha').value.trim(),
+            nome: $('#setupNome').value.trim(),
+            moskitUserId: $('#setupMoskit').value,
+          }),
+        });
+        const j = await r.json();
+        if (!r.ok) { $('#setupMsg').textContent = j.error || 'Não consegui criar o acesso.'; return; }
+        // já entra com o acesso recém-criado
+        localStorage.setItem('appUser', j.login);
+        localStorage.setItem('appPass', $('#setupSenha').value.trim());
+        hide('#setup');
+        setupAberto = null;
+        resolve();
+        carregaUsuario();
+      } finally {
+        $('#setupBtn').disabled = false;
+      }
+    };
+  });
+  return setupAberto;
+}
+
+function preencheMoskit(sel, pessoas) {
+  const el = $(sel);
+  el.innerHTML = pessoas.length
+    ? '<option value="">escolha…</option>' +
+      pessoas.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('')
+    : '<option value="">(não consegui falar com o Moskit)</option>';
+}
+
+// ------------------------------------------------------------------- equipe
+async function loadEquipe() {
+  const r = await api('/api/usuarios');
+  if (!r.ok) return;
+  const { usuarios, pessoas, onde, eu } = await r.json();
+  preencheMoskit('#eqMoskit', pessoas || []);
+  $('#equipeOnde').textContent = `Os acessos ficam salvos em: ${onde}.`;
+  const wrap = $('#equipe');
+  wrap.innerHTML = '';
+  for (const u of usuarios) {
+    const pessoa = (pessoas || []).find(p => p.id === u.moskit_user_id);
+    const el = document.createElement('div');
+    el.className = 'lista-card';
+    el.innerHTML = `
+      <div class="lista-num">${esc((u.nome || u.login).slice(0, 2).toUpperCase())}</div>
+      <div class="lista-info">
+        <h3>${esc(u.nome)} <span class="badge ${u.ativo ? 'completa' : 'cancelada'}">${u.ativo ? 'ativo' : 'desativado'}</span></h3>
+        <p>login <b>${esc(u.login)}</b>${u.login === eu ? ' (você)' : ''} · leads vão para
+           <b>${esc(pessoa ? pessoa.name : '#' + (u.moskit_user_id || '?'))}</b> no Moskit
+           ${u.fonte === 'config' ? ' · cadastrado no .env do servidor' : ''}</p>
+      </div>
+      <div class="lista-actions">
+        ${u.login === eu || u.fonte === 'config' ? ''
+          : `<button class="ghost ${u.ativo ? 'danger' : ''}" data-login="${esc(u.login)}" data-ativo="${u.ativo ? '0' : '1'}">${u.ativo ? 'Desativar' : 'Reativar'}</button>`}
+      </div>`;
+    wrap.appendChild(el);
+  }
+  wrap.querySelectorAll('button[data-login]').forEach(b => {
+    b.addEventListener('click', async () => {
+      b.disabled = true;
+      const r2 = await api('/api/usuarios', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ login: b.dataset.login, ativo: b.dataset.ativo === '1' }),
+      });
+      const j2 = await r2.json();
+      if (!r2.ok) { $('#eqMsg').textContent = j2.error || 'Não consegui mudar.'; b.disabled = false; return; }
+      loadEquipe();
+    });
+  });
+}
+
+$('#eqSalvar').addEventListener('click', async () => {
+  $('#eqMsg').textContent = '';
+  const body = {
+    login: $('#eqLogin').value.trim().toLowerCase(),
+    senha: $('#eqSenha').value.trim(),
+    nome: $('#eqNome').value.trim(),
+    moskitUserId: $('#eqMoskit').value,
+  };
+  $('#eqSalvar').disabled = true;
+  try {
+    const r = await api('/api/usuarios', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    const j = await r.json();
+    if (!r.ok) { $('#eqMsg').textContent = j.error || 'Não consegui salvar.'; return; }
+    $('#eqLogin').value = ''; $('#eqSenha').value = ''; $('#eqNome').value = ''; $('#eqMoskit').value = '';
+    $('#eqMsg').textContent = '';
+    loadEquipe();
+  } finally { $('#eqSalvar').disabled = false; }
+});
+
 // ------------------------------------------------------------------- tabs
 document.querySelectorAll('.tab').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -90,6 +212,7 @@ document.querySelectorAll('.tab').forEach(btn => {
     btn.classList.add('active');
     $('#tab-' + btn.dataset.tab).classList.add('active');
     if (btn.dataset.tab === 'listas') loadLists();
+    if (btn.dataset.tab === 'equipe') loadEquipe();
   });
 });
 
@@ -322,6 +445,10 @@ function showError(msg) { $('#formError').textContent = msg; show('#formError');
 
 // primeiro o login (se precisar), depois retoma job em andamento e carrega o histórico
 (async () => {
+  try {
+    const s = await (await fetch('/api/setup')).json();
+    if (s.precisaConfigurar) await abrirSetup();
+  } catch { /* modo local não tem /api/setup */ }
   await carregaUsuario();
   try {
     const r = await api('/api/job/active');

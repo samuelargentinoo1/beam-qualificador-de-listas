@@ -34,6 +34,8 @@ const wrap = handler => (req, res) => {
   });
 };
 
+app.all('/api/setup', wrap(require('./api/setup')));
+app.all('/api/usuarios', wrap(require('./api/usuarios')));
 app.all('/api/me', wrap(require('./api/me')));
 app.all('/api/generate', wrap(require('./api/generate')));
 app.all('/api/job/active', wrap(require('./api/job/active')));
@@ -55,15 +57,14 @@ app.listen(PORT, '0.0.0.0', async () => {
     return;
   }
   const r = await resumo(db);
-  if (r.naTabela === null) {
-    console.log('ℹ️  Tabela "usuarios" ainda não existe no Supabase (rode o supabase-schema.sql quando quiser gerenciar por lá).');
+  const f = r.fontes;
+  if (!r.total) {
+    console.log('🔧 Nenhum acesso criado ainda — o painel vai abrir na tela de PRIMEIRO ACESSO.');
+    console.log(`   ${process.env.APP_PASSWORD ? 'A chave de instalação é a senha antiga do painel (APP_PASSWORD).' : '⚠️  Sem APP_PASSWORD no .env: a tela de primeiro acesso fica aberta a quem tiver o link.'}`);
   } else {
-    console.log(`👤 tabela "usuarios": ${r.naTabela} ativo(s).`);
-  }
-  if (r.naConfig) console.log(`👤 PAINEL_USUARIOS (.env): ${r.naConfig} — ${r.logins.join(', ')}`);
-  if (!r.naTabela && !r.naConfig) {
-    console.warn('⚠️  Nenhum usuário cadastrado: ninguém consegue entrar. Preencha PAINEL_USUARIOS no .env ou rode o supabase-schema.sql.');
-  } else {
+    console.log(`👤 ${r.total} acesso(s): ${r.logins.join(', ')}`);
+    console.log(`   onde: tabela=${f.tabela} · arquivo=${f.arquivo} · .env=${f.config} ` +
+                `(a tabela do Supabase manda quando existe)`);
     console.log('   os leads de cada lista vão pro Moskit no nome de quem pediu.');
   }
 });

@@ -36,20 +36,24 @@ Cada pessoa entra no painel com **usuário e senha próprios**. O pedido de list
 pediu, e ao terminar os leads sobem pro Moskit com **essa pessoa** como responsável
 (empresa + contato + negócio). Não existe mais senha única do painel.
 
-Os usuários podem vir de **duas fontes** — a tabela manda quando existe:
+**Como criar os acessos:** na primeira vez que o painel abre sem nenhum usuário, ele mostra a
+tela de **Primeiro acesso** — você monta o seu login ali mesmo, usando a *chave de instalação*
+(o valor de `APP_PASSWORD` no `.env`, que era a senha antiga do painel). Depois disso, a aba
+**Equipe** cadastra o resto do time: usuário, senha e a pessoa correspondente no Moskit.
+Nada de SQL nem de mexer no servidor.
 
-| Fonte | Onde | Quando usar |
+Os usuários podem vir de **três fontes**, nesta ordem de prioridade:
+
+| Fonte | Onde | Observação |
 |---|---|---|
-| `PAINEL_USUARIOS` | `.env` do servidor | jeito rápido, não precisa criar tabela |
-| tabela `usuarios` | Supabase | jeito definitivo, gerenciado por SQL |
+| tabela `usuarios` | Supabase | manda quando existe (rode o `supabase-schema.sql`) |
+| `data/usuarios.json` | servidor | criado pelo painel (primeiro acesso + aba Equipe) |
+| `PAINEL_USUARIOS` | `.env` | `login:senha:Nome:idNoMoskit`, separados por vírgula |
 
-No `.env` (reinicie o painel depois de mudar):
+O painel grava na tabela quando ela existe; senão, no arquivo. Se um dia você criar a tabela,
+ela assume sozinha — sem trocar código.
 
-```
-PAINEL_USUARIOS=julia:SENHA-AQUI:Julia:155073,samuel:OUTRA-SENHA:Samuel:113717
-```
-
-Dar acesso a alguém pela tabela (SQL Editor do Supabase):
+Dar acesso a alguém direto pela tabela (SQL Editor do Supabase):
 
 ```sql
 insert into usuarios (login, senha, nome, moskit_user_id) values ('julia', 'SENHA-AQUI', 'Julia', 155073);

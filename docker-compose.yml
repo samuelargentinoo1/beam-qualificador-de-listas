@@ -21,7 +21,11 @@ services:
     container_name: beam-painel
     command: ["node", "painel.js"]  # sem xvfb: aqui não tem Chrome
     restart: unless-stopped
-    env_file: .env                  # Supabase + APP_PASSWORD
+    env_file: .env                  # Supabase + chave de instalação (APP_PASSWORD)
+    volumes:
+      # onde ficam os acessos criados na tela de primeiro acesso/Equipe
+      # (data/usuarios.json) — precisa persistir entre rebuilds
+      - ./data:/app/data
     ports:
       # só loopback: quem atende a internet é o nginx do host, com HTTPS
       # (https://qualificador.beambroker.com.br → proxy → 127.0.0.1:8010)

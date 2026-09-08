@@ -11,11 +11,15 @@ Funciona de qualquer computador ou celular, a qualquer hora.
 
 ## Seu login (cada pessoa tem o seu)
 
-Na primeira vez o painel pede **usuário e senha** — peça os seus ao Samuel (eles não
-ficam escritos aqui: este repositório é público). Depois de entrar uma vez, o navegador
-guarda e não pergunta mais naquele aparelho. Seu nome aparece no canto superior direito.
+Na primeira vez o painel mostra uma **tela de login** com usuário e senha — peça os seus
+ao Samuel (eles não ficam escritos aqui: este repositório é público). Depois de entrar uma
+vez, o navegador guarda e não pergunta mais naquele aparelho. Seu nome aparece no canto
+superior direito.
 
-A senha única antiga (a mesma pra todo mundo) não vale mais.
+A senha única antiga (a mesma pra todo mundo, na caixinha do navegador) não existe mais.
+
+**Samuel:** para cadastrar alguém, entre no painel e use a aba **Equipe** — usuário, senha
+e qual pessoa do Moskit vai receber os leads. Quem sai do time é só desativar por lá.
 
 **Por que cada um tem o seu:** a ferramenta usa o login pra saber **quem pediu** a lista.
 Ao terminar, os leads caem no Moskit com **você** como responsável — não vão mais pra

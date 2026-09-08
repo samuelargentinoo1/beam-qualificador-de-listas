@@ -37,6 +37,7 @@
     <nav>
       <button class="tab active" data-tab="gerar">Gerar lista</button>
       <button class="tab" data-tab="listas">Minhas listas</button>
+      <button class="tab" data-tab="equipe">Equipe</button>
     </nav>
     <div class="brand-partner">beam<em>broker</em> + babuya</div>
     <!-- quem está logado (só no painel da nuvem; o local não tem login) -->
@@ -45,6 +46,28 @@
       <button type="button" class="linkish" id="btnSair" title="Trocar de usuário">sair</button>
     </div>
   </header>
+
+  <!-- PRIMEIRO ACESSO: aparece só enquanto não existe nenhum login criado.
+       Cria o acesso do administrador direto pela tela, sem SQL e sem servidor. -->
+  <div id="setup" class="login hidden">
+    <form id="setupForm" class="login-card">
+      <h2>Primeiro acesso</h2>
+      <p class="muted small">Nenhum acesso foi criado ainda. Monte o seu agora — depois você
+        cadastra o resto do time na aba <b>Equipe</b>.</p>
+      <label id="setupChaveWrap">Chave de instalação
+        <input id="setupChave" type="password" placeholder="a senha que o painel usava antes" />
+      </label>
+      <label>Usuário <input id="setupLogin" autocapitalize="none" placeholder="ex.: samuel" /></label>
+      <label>Senha <input id="setupSenha" type="password" placeholder="mínimo 4 caracteres" /></label>
+      <label>Nome que aparece no painel <input id="setupNome" placeholder="ex.: Samuel" /></label>
+      <label>Quem você é no Moskit
+        <select id="setupMoskit"><option value="">carregando…</option></select>
+      </label>
+      <p class="muted small">É por aqui que a ferramenta sabe de quem são os leads das listas.</p>
+      <p id="setupMsg" class="error"></p>
+      <button type="submit" id="setupBtn">Criar acesso</button>
+    </form>
+  </div>
 
   <!-- LOGIN INDIVIDUAL: cada SDR entra com o seu — é assim que os leads da lista
        caem no Moskit com essa pessoa como responsável. -->
@@ -141,6 +164,29 @@
         gerações novas na mesma praça <b>nunca repetem</b> esses leads.</p>
       <div id="listas" class="listas"></div>
       <p id="listasVazio" class="muted hidden">Nenhuma lista ainda. Gere a primeira na aba “Gerar lista”. ✨</p>
+    </section>
+
+    <!-- ============================== TAB: EQUIPE ============================== -->
+    <section id="tab-equipe" class="tab-panel">
+      <h1>Quem tem acesso</h1>
+      <p class="sub">Cada pessoa entra com o login dela. Os leads da lista que ela subir vão
+        pro Moskit <b>no nome dela</b>. Quem sai do time é só desativar.</p>
+
+      <div class="card">
+        <h2 class="card-titulo">Adicionar ou atualizar alguém</h2>
+        <div class="form-linha">
+          <label>Usuário <input id="eqLogin" autocapitalize="none" placeholder="ex.: julia" /></label>
+          <label>Senha <input id="eqSenha" type="text" placeholder="a senha dela" /></label>
+          <label>Nome <input id="eqNome" placeholder="ex.: Julia" /></label>
+          <label>Pessoa no Moskit <select id="eqMoskit"><option value="">carregando…</option></select></label>
+          <button type="button" id="eqSalvar">Salvar</button>
+        </div>
+        <p id="eqMsg" class="error"></p>
+        <p class="muted small">Já existe esse usuário? Salvar de novo troca a senha dele.</p>
+      </div>
+
+      <div id="equipe" class="listas"></div>
+      <p id="equipeOnde" class="muted small"></p>
     </section>
   </main>
 
