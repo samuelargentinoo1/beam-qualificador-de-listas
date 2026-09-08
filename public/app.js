@@ -224,9 +224,19 @@ $('#target').addEventListener('input', () => {
 });
 
 // ------------------------------------------------------- planilha (nome+CNPJ)
-// O arquivo é lido aqui só pra virar texto; quem valida colunas e CNPJ é o
-// servidor (lib/importar.js), pra ter UMA regra só — e não duas divergindo.
-let planilhaTexto = null;
+// O arquivo vai pro servidor como BYTES (base64): .xlsx e .xls são binários e
+// viravam lixo quando líamos como texto aqui. Quem entende o formato, acha as
+// colunas e valida o CNPJ é o servidor (lib/importar.js) — uma regra só.
+let planilhaArquivo = null;   // { nome, b64 }
+
+function bytesParaBase64(buf) {
+  const bytes = new Uint8Array(buf);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {   // em pedaços: string gigante estoura
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(bin);
+}
 
 $('#btnPlanilha').addEventListener('click', () => $('#planilha').click());
 
@@ -234,9 +244,9 @@ $('#planilha').addEventListener('change', async e => {
   const file = e.target.files[0];
   if (!file) return;
   hide('#formError');
-  planilhaTexto = await file.text();
-  const linhas = planilhaTexto.split('\n').filter(l => l.trim()).length;
-  $('#planilhaNome').textContent = `${file.name} — ~${Math.max(0, linhas - 1)} linhas`;
+  planilhaArquivo = { nome: file.name, b64: bytesParaBase64(await file.arrayBuffer()) };
+  const kb = Math.max(1, Math.round(file.size / 1024));
+  $('#planilhaNome').textContent = `${file.name} — ${kb} KB`;
   show('#planilhaInfo');
   $('#btnPlanilha').classList.add('hidden');
   $('#query').placeholder = 'ex.: imobiliárias  (só o segmento — a cidade vem do CNPJ)';
@@ -244,7 +254,7 @@ $('#planilha').addEventListener('change', async e => {
 });
 
 $('#btnTirarPlanilha').addEventListener('click', () => {
-  planilhaTexto = null;
+  planilhaArquivo = null;
   $('#planilha').value = '';
   hide('#planilhaInfo');
   $('#btnPlanilha').classList.remove('hidden');
@@ -253,8 +263,8 @@ $('#btnTirarPlanilha').addEventListener('click', () => {
 });
 
 function atualizaBotao() {
-  $('#btnGerar').textContent = planilhaTexto ? 'Qualificar planilha' : '';
-  if (!planilhaTexto) {
+  $('#btnGerar').textContent = planilhaArquivo ? 'Qualificar planilha' : '';
+  if (!planilhaArquivo) {
     $('#btnGerar').innerHTML = 'Gerar <span id="targetLabel">' + ($('#target').value || '60') + '</span> leads';
   }
 }
@@ -267,12 +277,13 @@ $('#searchForm').addEventListener('submit', async e => {
     uf: $('#uf').value.trim(),
     target: parseInt($('#target').value, 10) || 60,
   };
-  if (planilhaTexto) {
-    body.planilha = planilhaTexto;
+  if (planilhaArquivo) {
+    body.planilhaB64 = planilhaArquivo.b64;
+    body.planilhaNome = planilhaArquivo.nome;
     delete body.target; // planilha: o alvo é qualificar tudo que veio nela
   }
   if (!body.query) {
-    return showError(planilhaTexto
+    return showError(planilhaArquivo
       ? 'Escreva o segmento da planilha, ex.: "imobiliárias" — é ele que forma a praça do anti-repetido.'
       : 'Digite o que você quer, ex.: "imobiliárias de São José do Rio Preto".');
   }

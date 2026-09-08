@@ -10,7 +10,7 @@
 // O pedido grava QUEM pediu (login individual): é essa pessoa que fica como
 // responsável dos leads no Moskit quando a lista termina.
 const { guard } = require('../lib/cloud/supa');
-const { lerPlanilha } = require('../lib/importar');
+const { lerPlanilha, lerArquivo } = require('../lib/importar');
 
 const MAX_LINHAS = 2000;
 
@@ -20,16 +20,19 @@ module.exports = async (req, res) => {
   if (!auth) return;
   const { db, user } = auth;
 
-  const { query, uf, target, planilha } = req.body || {};
+  const { query, uf, target, planilha, planilhaB64, planilhaNome } = req.body || {};
   if (!query || !String(query).trim()) {
     return res.status(400).json({ error: 'Digite o que você quer, ex.: "imobiliárias de Curitiba".' });
   }
 
-  // ---------- modo planilha
+  // ---------- modo planilha (Excel ou CSV; o painel manda os bytes em base64)
   let rows = null;
   let avisoPlanilha = null;
-  if (typeof planilha === 'string' && planilha.trim()) {
-    const lido = lerPlanilha(planilha);
+  const temArquivo = typeof planilhaB64 === 'string' && planilhaB64.trim();
+  if (temArquivo || (typeof planilha === 'string' && planilha.trim())) {
+    const lido = temArquivo
+      ? lerArquivo(Buffer.from(planilhaB64, 'base64'), planilhaNome || '')
+      : lerPlanilha(planilha);
     if (lido.info && lido.info.erro) return res.status(400).json({ error: lido.info.erro });
     if (!lido.rows.length) {
       const motivos = lido.descartes.slice(0, 3).map(d => `${d.name}: ${d.reason}`).join(' · ');
@@ -48,6 +51,8 @@ module.exports = async (req, res) => {
       descartadas: lido.descartes.length,
       colunaNome: lido.info.colunaNome,
       colunaCnpj: lido.info.colunaCnpj,
+      formato: lido.info.formato,
+      aba: lido.info.aba,
     };
   }
 

@@ -108,9 +108,12 @@
 
         <!-- Origem alternativa: planilha do banco (nome + CNPJ) no lugar do Maps -->
         <div class="importar">
-          <input id="planilha" type="file" accept=".csv,.tsv,.txt,text/csv" hidden />
+          <!-- Excel e CSV. Os tipos MIME entram junto das extensões porque o
+               seletor do Mac desabilita o arquivo quando só tem a extensão. -->
+          <input id="planilha" type="file" hidden
+            accept=".xlsx,.xls,.csv,.tsv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/vnd.ms-excel.sheet.macroEnabled.12,text/csv,text/tab-separated-values,text/plain" />
           <button type="button" id="btnPlanilha" class="ghost">📄 Usar uma planilha (nome + CNPJ)</button>
-          <span class="hint">em vez de buscar no Maps, qualifica as empresas que você já tem</span>
+          <span class="hint">Excel (.xlsx, .xls) ou CSV — qualifica as empresas que você já tem</span>
           <div id="planilhaInfo" class="planilha-info hidden">
             <span id="planilhaNome"></span>
             <button type="button" id="btnTirarPlanilha" class="linkish">remover</button>

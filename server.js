@@ -17,7 +17,7 @@ const fs = require('fs');
 })();
 const { runJob, LISTS_PATH } = require('./lib/runner');
 const ledgerLib = require('./lib/ledger');
-const { lerPlanilha } = require('./lib/importar');
+const { lerPlanilha, lerArquivo } = require('./lib/importar');
 const { readJson, titleCase } = require('./lib/util');
 
 const app = express();
@@ -72,7 +72,8 @@ app.post('/api/generate', (req, res) => {
     console.log('[api] recusado: já existe geração em andamento');
     return res.status(409).json({ error: 'Já existe uma geração em andamento. Aguarde ou cancele.' });
   }
-  const { query, segment, city, uf, target, rows, planilha, usuario, moskitUserId } = req.body || {};
+  const { query, segment, city, uf, target, rows, planilha, planilhaB64, planilhaNome,
+          usuario, moskitUserId } = req.body || {};
 
   // MODO PLANILHA: os alvos vêm prontos (nome+CNPJ). Aceita as linhas já lidas
   // (`rows`, é o que a nuvem manda) ou o CSV cru (`planilha`, útil em teste local).
@@ -80,9 +81,12 @@ app.post('/api/generate', (req, res) => {
   let infoPlanilha = null;
   // "mandou planilha" ≠ "a planilha tem linhas boas": sem separar os dois, uma
   // planilha toda inválida cairia no erro de segmento/cidade, que confunde.
-  const enviouPlanilha = !!(Array.isArray(rows) || (typeof planilha === 'string' && planilha.trim()));
-  if (!linhas && typeof planilha === 'string' && planilha.trim()) {
-    const lido = lerPlanilha(planilha);
+  const temArquivo = typeof planilhaB64 === 'string' && !!planilhaB64.trim();
+  const enviouPlanilha = !!(Array.isArray(rows) || temArquivo || (typeof planilha === 'string' && planilha.trim()));
+  if (!linhas && (temArquivo || (typeof planilha === 'string' && planilha.trim()))) {
+    const lido = temArquivo
+      ? lerArquivo(Buffer.from(planilhaB64, 'base64'), planilhaNome || '')
+      : lerPlanilha(planilha);
     if (lido.info && lido.info.erro) return res.status(400).json({ error: lido.info.erro });
     linhas = lido.rows;
     infoPlanilha = lido.info;
