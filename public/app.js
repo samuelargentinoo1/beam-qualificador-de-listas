@@ -30,13 +30,17 @@ function pedirLogin(msg) {
       $('#loginMsg').textContent = msg || '';
       $('#loginUser').value = getUser();
       $('#loginPass').value = '';
+      $('#loginBtn').disabled = false;
       show('#login');
       (getUser() ? $('#loginPass') : $('#loginUser')).focus();
       $('#loginForm').onsubmit = e => {
         e.preventDefault();
         localStorage.setItem('appUser', $('#loginUser').value.trim().toLowerCase());
         localStorage.setItem('appPass', $('#loginPass').value.trim()); // trim: mata espaço de colagem
-        hide('#login');
+        // a tela NÃO some agora: ela só sai quando uma chamada passar de verdade
+        // (senão ela pisca e volta a cada senha errada)
+        $('#loginMsg').textContent = 'conferindo…';
+        $('#loginBtn').disabled = true;
         loginAberto = null;
         resolve();
       };
@@ -54,6 +58,7 @@ async function api(path, opts = {}) {
     await pedirLogin(getPass() ? (j.error || 'Usuário ou senha incorretos.') : '');
     return api(path, opts); // tenta de novo com o login novo
   }
+  hide('#login'); // deu certo (ou é erro de servidor): a tela de login sai
   if (r.status === 503) {
     // servidor sem banco/tabela: mostra a instrução na tela (não adianta insistir)
     const j = await r.clone().json().catch(() => ({}));

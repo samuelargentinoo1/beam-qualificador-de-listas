@@ -32,11 +32,24 @@ Configuração (1x):
 
 ### Login individual → responsável no Moskit
 
-Cada pessoa entra no painel com **usuário e senha próprios** (tabela `usuarios` no Supabase).
-O pedido de lista grava quem pediu, e ao terminar os leads sobem pro Moskit com **essa pessoa**
-como responsável (empresa + contato + negócio). Não existe mais senha única do painel.
+Cada pessoa entra no painel com **usuário e senha próprios**. O pedido de lista grava quem
+pediu, e ao terminar os leads sobem pro Moskit com **essa pessoa** como responsável
+(empresa + contato + negócio). Não existe mais senha única do painel.
 
-Dar acesso a alguém (SQL Editor do Supabase):
+Os usuários podem vir de **duas fontes** — a tabela manda quando existe:
+
+| Fonte | Onde | Quando usar |
+|---|---|---|
+| `PAINEL_USUARIOS` | `.env` do servidor | jeito rápido, não precisa criar tabela |
+| tabela `usuarios` | Supabase | jeito definitivo, gerenciado por SQL |
+
+No `.env` (reinicie o painel depois de mudar):
+
+```
+PAINEL_USUARIOS=julia:SENHA-AQUI:Julia:155073,samuel:OUTRA-SENHA:Samuel:113717
+```
+
+Dar acesso a alguém pela tabela (SQL Editor do Supabase):
 
 ```sql
 insert into usuarios (login, senha, nome, moskit_user_id) values ('julia', 'SENHA-AQUI', 'Julia', 155073);

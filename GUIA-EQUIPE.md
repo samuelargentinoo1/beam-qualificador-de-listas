@@ -15,6 +15,8 @@ Na primeira vez o painel pede **usuário e senha** — peça os seus ao Samuel (
 ficam escritos aqui: este repositório é público). Depois de entrar uma vez, o navegador
 guarda e não pergunta mais naquele aparelho. Seu nome aparece no canto superior direito.
 
+A senha única antiga (a mesma pra todo mundo) não vale mais.
+
 **Por que cada um tem o seu:** a ferramenta usa o login pra saber **quem pediu** a lista.
 Ao terminar, os leads caem no Moskit com **você** como responsável — não vão mais pra
 outra pessoa.

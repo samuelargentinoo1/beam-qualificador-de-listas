@@ -46,17 +46,24 @@ app.use(express.static(path.join(__dirname, 'public')));
 const PORT = Number(process.env.PAINEL_PORT || 8010);
 app.listen(PORT, '0.0.0.0', async () => {
   console.log(`🖥  Painel Beam no ar: http://0.0.0.0:${PORT} (APIs de nuvem + front)`);
-  // confere se o banco já tem a tabela de usuários (login individual)
+  // quem pode entrar: tabela `usuarios` do Supabase e/ou PAINEL_USUARIOS do .env
   const { supa } = require('./lib/cloud/supa');
+  const { resumo } = require('./lib/cloud/usuarios');
   const db = supa();
   if (!db) {
     console.warn('⚠️  SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY não definidos no .env — as APIs vão responder 503.');
     return;
   }
-  // (select de verdade, não HEAD/count: numa tabela inexistente o count volta null SEM erro)
-  const { data: ativos, error } = await db.from('usuarios').select('login').eq('ativo', true).limit(500);
-  const count = (ativos || []).length;
-  if (error) console.warn('⚠️  Tabela "usuarios" não encontrada no Supabase — rode o supabase-schema.sql no SQL Editor. Ninguém consegue entrar até lá.');
-  else if (!count) console.warn('⚠️  Tabela "usuarios" está vazia — cadastre os SDRs (veja o Readme). Ninguém consegue entrar até lá.');
-  else console.log(`👤 ${count} usuário(s) ativo(s) no painel — os leads de cada lista vão pra quem pediu.`);
+  const r = await resumo(db);
+  if (r.naTabela === null) {
+    console.log('ℹ️  Tabela "usuarios" ainda não existe no Supabase (rode o supabase-schema.sql quando quiser gerenciar por lá).');
+  } else {
+    console.log(`👤 tabela "usuarios": ${r.naTabela} ativo(s).`);
+  }
+  if (r.naConfig) console.log(`👤 PAINEL_USUARIOS (.env): ${r.naConfig} — ${r.logins.join(', ')}`);
+  if (!r.naTabela && !r.naConfig) {
+    console.warn('⚠️  Nenhum usuário cadastrado: ninguém consegue entrar. Preencha PAINEL_USUARIOS no .env ou rode o supabase-schema.sql.');
+  } else {
+    console.log('   os leads de cada lista vão pro Moskit no nome de quem pediu.');
+  }
 });
