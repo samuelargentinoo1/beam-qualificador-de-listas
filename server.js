@@ -38,6 +38,7 @@ function jobView(job) {
     // as linhas em si não vão no view (podem ser milhares) — só quantas são
     origem: job.origem || 'maps',
     linhasPlanilha: Array.isArray(job.rows) ? job.rows.length : 0,
+    usuario: job.usuario || null,
     counts: job.counts,
     log: job.log.slice(-80),
     startedAt: job.startedAt,
@@ -71,7 +72,7 @@ app.post('/api/generate', (req, res) => {
     console.log('[api] recusado: já existe geração em andamento');
     return res.status(409).json({ error: 'Já existe uma geração em andamento. Aguarde ou cancele.' });
   }
-  const { query, segment, city, uf, target, rows, planilha } = req.body || {};
+  const { query, segment, city, uf, target, rows, planilha, usuario, moskitUserId } = req.body || {};
 
   // MODO PLANILHA: os alvos vêm prontos (nome+CNPJ). Aceita as linhas já lidas
   // (`rows`, é o que a nuvem manda) ou o CSV cru (`planilha`, útil em teste local).
@@ -127,6 +128,10 @@ app.post('/api/generate', (req, res) => {
     target: tgt,
     rows: modoPlanilha ? linhas : null,
     origem: modoPlanilha ? 'planilha' : 'maps',
+    // quem pediu no painel (vem do worker) → responsável dos leads no Moskit.
+    // Sem isso (geração local direta) o Moskit usa o padrão do .env.
+    usuario: usuario ? String(usuario).slice(0, 80) : null,
+    moskitUserId: parseInt(moskitUserId, 10) || null,
     counts: { capturados: 0, limpos: 0, qualificados: 0, descartados: 0, jaEntregues: 0, adiados: 0 },
     log: infoPlanilha
       ? [`[${new Date().toLocaleTimeString('pt-BR')}] Planilha lida: coluna de nome "${infoPlanilha.colunaNome}", ` +
@@ -175,6 +180,9 @@ app.get('/api/lists/:id/file/:kind', (req, res) => {
   if (!file || !fs.existsSync(file)) return res.status(404).send('Arquivo não encontrado');
   res.download(file);
 });
+
+// modo local não tem login: o painel esconde o nome no topo
+app.get('/api/me', (_req, res) => res.json({ local: true, login: null, nome: null }));
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, name: 'Beam Qualificador de Listas' }));
 

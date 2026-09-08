@@ -1,11 +1,11 @@
 'use strict';
 // GET /api/job/active — job em aberto (na fila/rodando) ou o último finalizado.
-const { supa, guard, needDb } = require('../../lib/cloud/supa');
+const { guard } = require('../../lib/cloud/supa');
 
 module.exports = async (req, res) => {
-  if (!guard(req, res)) return;
-  const db = supa();
-  if (!db) return needDb(res);
+  const auth = await guard(req, res);
+  if (!auth) return;
+  const { db } = auth;
 
   // prioridade de exibição: RODANDO > próximo da fila (mais antigo) > último finalizado
   let { data: job } = await db.from('jobs')
@@ -36,6 +36,9 @@ module.exports = async (req, res) => {
       query: job.query,
       uf: job.uf,
       target: job.target,
+      origem: job.origem || 'maps',
+      linhasPlanilha: Array.isArray(job.rows) ? job.rows.length : 0,
+      usuario: job.usuario_nome || job.usuario || null,   // quem pediu (responsável no Moskit)
       counts: job.counts || {},
       log: job.log || [],
       startedAt: job.started_at,

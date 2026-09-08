@@ -239,3 +239,44 @@ footer {
   .funnel { justify-content: center; }
   .arrow { display: none; }
 }
+
+/* ============================================================
+   LOGIN INDIVIDUAL (painel da nuvem) + quem está logado no topo
+   ============================================================ */
+.who {
+  display: flex; align-items: center; gap: 8px; margin-left: 18px;
+  font-size: 13px; color: var(--muted); white-space: nowrap;
+}
+.who b { color: var(--text); font-weight: 600; }
+.who .linkish { font-size: 12px; }
+
+.login {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+  background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(6px);
+}
+.login-card {
+  width: 100%; max-width: 380px;
+  background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 28px; display: flex; flex-direction: column; gap: 14px;
+  box-shadow: 0 30px 80px -30px color-mix(in srgb, var(--accent-1) 45%, transparent);
+}
+.login-card h2 { font-size: 20px; }
+.login-card .sub, .login-card p { line-height: 1.5; }
+.login-card label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
+.login-card input {
+  background: var(--bg-card-2); border: 1px solid var(--line); border-radius: 10px;
+  color: var(--text); padding: 10px 12px; font-family: inherit; font-size: 15px; outline: none;
+}
+.login-card input:focus { border-color: color-mix(in srgb, var(--accent-1) 60%, var(--line)); }
+.login-card button[type=submit] {
+  border: none; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 15px;
+  color: var(--on-accent); padding: 12px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+}
+.login-card button[type=submit]:hover { filter: brightness(1.12); }
+.login-card .error { margin-top: 0; min-height: 1.2em; }
+
+@media (max-width: 720px) {
+  .who { margin-left: auto; }
+}

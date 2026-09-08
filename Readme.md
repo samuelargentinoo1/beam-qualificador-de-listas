@@ -26,11 +26,30 @@ painel (Vercel) → fila (Supabase) → worker no seu Mac → leads voltam pro S
 
 Configuração (1x):
 1. **Supabase** → SQL Editor → cole o conteúdo de `supabase-schema.sql` → Run.
-2. **Vercel** → Settings → Environment Variables: confirme `SUPABASE_URL` e
-   `SUPABASE_SERVICE_ROLE_KEY` (a integração Supabase já cria) e adicione **`APP_PASSWORD`**
-   (a senha do painel). Redeploy.
-3. **No computador**: copie `.env.example` para `.env`, preencha com URL e service_role do
+2. **Cadastre os SDRs** (login individual — veja a seção abaixo).
+3. **No computador/VPS**: copie `.env.example` para `.env`, preencha com URL e service_role do
    Supabase, e rode o `Iniciar Ferramenta.command` — o worker liga junto e fica vigiando a fila.
+
+### Login individual → responsável no Moskit
+
+Cada pessoa entra no painel com **usuário e senha próprios** (tabela `usuarios` no Supabase).
+O pedido de lista grava quem pediu, e ao terminar os leads sobem pro Moskit com **essa pessoa**
+como responsável (empresa + contato + negócio). Não existe mais senha única do painel.
+
+Dar acesso a alguém (SQL Editor do Supabase):
+
+```sql
+insert into usuarios (login, senha, nome, moskit_user_id) values ('julia', 'SENHA-AQUI', 'Julia', 155073);
+```
+
+- `login`: minúsculo, sem espaço — é o que a pessoa digita.
+- `moskit_user_id`: id do usuário no Moskit. Pra listar todos: `node scripts/moskit-usuarios.js`.
+- Alguém saiu do time: `update usuarios set ativo = false where login = 'fulano';`
+- Link mágico pra mandar pra pessoa (entra sozinho): `https://qualificador.beambroker.com.br/#u=julia&k=SENHA`
+
+`MOSKIT_RESPONSIBLE_ID` no `.env` virou só o **padrão de segurança**: é usado quando o pedido
+não tem usuário (geração local sem login) ou quando o `moskit_user_id` cadastrado não existe /
+está inativo na conta — nesse caso o log da geração avisa.
 
 Pedidos feitos no painel ficam **na fila** até o computador com o worker estar ligado.
 No painel da nuvem, os downloads disponíveis são a **Lista Final** e o **CSV Pipedrive**

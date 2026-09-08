@@ -1,12 +1,12 @@
 'use strict';
 // POST /api/job/cancel — pede cancelamento (na fila: cancela direto; rodando: worker cancela).
-const { supa, guard, needDb } = require('../../lib/cloud/supa');
+const { guard } = require('../../lib/cloud/supa');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST apenas' });
-  if (!guard(req, res)) return;
-  const db = supa();
-  if (!db) return needDb(res);
+  const auth = await guard(req, res);
+  if (!auth) return;
+  const { db } = auth;
 
   // rodando → sinaliza pro worker cancelar (a fila continua intacta)
   const { data: rodando } = await db.from('jobs')

@@ -6,16 +6,19 @@
 //   • Planilha  — { query, planilha: "<csv cru>" }  (nome + CNPJ)
 // A planilha é LIDA e VALIDADA aqui, não no navegador: assim a pessoa descobre
 // na hora se as colunas estão erradas, em vez de esperar o worker pegar a fila.
-const { supa, guard, needDb } = require('../lib/cloud/supa');
+//
+// O pedido grava QUEM pediu (login individual): é essa pessoa que fica como
+// responsável dos leads no Moskit quando a lista termina.
+const { guard } = require('../lib/cloud/supa');
 const { lerPlanilha } = require('../lib/importar');
 
 const MAX_LINHAS = 2000;
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST apenas' });
-  if (!guard(req, res)) return;
-  const db = supa();
-  if (!db) return needDb(res);
+  const auth = await guard(req, res);
+  if (!auth) return;
+  const { db, user } = auth;
 
   const { query, uf, target, planilha } = req.body || {};
   if (!query || !String(query).trim()) {
@@ -56,11 +59,11 @@ module.exports = async (req, res) => {
   }
 
   const primeiraLinha = rows
-    ? `Pedido criado no painel — planilha com ${rows.length} empresa(s) ` +
+    ? `Pedido de ${user.nome} criado no painel — planilha com ${rows.length} empresa(s) ` +
       `(colunas "${avisoPlanilha.colunaNome}" e "${avisoPlanilha.colunaCnpj}"` +
       `${avisoPlanilha.descartadas ? `, ${avisoPlanilha.descartadas} linha(s) descartada(s) na leitura` : ''}). ` +
       'Aguardando o worker pegar a fila…'
-    : 'Pedido criado no painel — aguardando o computador de geração (worker) pegar a fila…';
+    : `Pedido de ${user.nome} criado no painel — aguardando o computador de geração (worker) pegar a fila…`;
 
   const registro = {
     query: String(query).trim(),
@@ -69,6 +72,10 @@ module.exports = async (req, res) => {
     target: rows
       ? Math.max(1, Math.min(MAX_LINHAS, parseInt(target, 10) || rows.length))
       : Math.max(1, Math.min(100, parseInt(target, 10) || 60)),
+    // quem pediu → responsável dos leads no Moskit
+    usuario: user.login,
+    usuario_nome: user.nome,
+    moskit_user_id: user.moskit_user_id,
     log: [primeiraLinha],
   };
   if (rows) { registro.rows = rows; registro.origem = 'planilha'; }
@@ -79,10 +86,12 @@ module.exports = async (req, res) => {
     // Coluna nova ainda não criada no banco: erro claro em vez do erro cru do
     // PostgREST ("column ... does not exist" OU "Could not find the '...' column
     // of 'jobs' in the schema cache" — a ordem das palavras varia).
-    if (/column/i.test(error.message) && /rows|origem/i.test(error.message)) {
+    if (/column/i.test(error.message) && /rows|origem|usuario|moskit_user_id/i.test(error.message)) {
       return res.status(500).json({
-        error: 'O banco ainda não tem as colunas do modo planilha. Rode no SQL Editor do Supabase: ' +
-               'alter table jobs add column if not exists rows jsonb, add column if not exists origem text;',
+        error: 'O banco ainda não tem as colunas novas da tabela jobs. Rode no SQL Editor do Supabase: ' +
+               'alter table jobs add column if not exists rows jsonb, add column if not exists origem text, ' +
+               'add column if not exists usuario text, add column if not exists usuario_nome text, ' +
+               'add column if not exists moskit_user_id int;',
       });
     }
     return res.status(500).json({ error: error.message });

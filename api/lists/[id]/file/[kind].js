@@ -1,15 +1,16 @@
 'use strict';
 // GET /api/lists/:id/file/:kind — baixa o CSV (final | pipedrive) gerado do banco.
-const { supa, guard, needDb } = require('../../../../lib/cloud/supa');
+const { guard } = require('../../../../lib/cloud/supa');
 const { finalCsv, pipedriveCsv } = require('../../../../lib/cloud/csv');
 const { createHash } = require('crypto');
 
 module.exports = async (req, res) => {
-  // o navegador não manda header em cliques de link → aceita ?pass= também
+  // o navegador não manda header em cliques de link → aceita ?user=&pass= também
+  if (req.query.user) req.headers['x-app-user'] = String(req.query.user);
   if (req.query.pass) req.headers['x-app-pass'] = String(req.query.pass);
-  if (!guard(req, res)) return;
-  const db = supa();
-  if (!db) return needDb(res);
+  const auth = await guard(req, res);
+  if (!auth) return;
+  const { db } = auth;
 
   const { id, kind } = req.query;
   const { data: list } = await db.from('lists').select('*').eq('id', id).maybeSingle();

@@ -66,11 +66,19 @@ function parseCsv(txt) {
 
 // ---------- sincroniza resultado final pro Supabase
 async function syncResult(job, entry) {
-  await db.from('lists').upsert({
+  const base = {
     id: entry.id, n: entry.n, date: entry.date, segment: entry.segment, city: entry.city,
     uf: entry.uf, key: entry.key, target: entry.target, delivered: entry.delivered,
     status: entry.status, totals: entry.totals, origem: entry.origem || 'maps',
-  });
+  };
+  // quem pediu (aparece em "Minhas listas")
+  const comAutor = { ...base, usuario: job.usuario || null, usuario_nome: job.usuario_nome || null };
+  let { error } = await db.from('lists').upsert(comAutor);
+  if (error && /usuario/i.test(error.message)) {
+    console.warn(`[${stamp()}] ⚠️  a tabela lists ainda não tem as colunas usuario/usuario_nome (rode o supabase-schema.sql) — histórico salvo sem o autor.`);
+    ({ error } = await db.from('lists').upsert(base));
+  }
+  if (error) console.error(`[${stamp()}] erro ao salvar histórico: ${error.message}`);
   const csvPath = entry.files && entry.files.final;
   if (csvPath && fs.existsSync(csvPath)) {
     const rows = parseCsv(fs.readFileSync(csvPath, 'utf8'));
@@ -93,8 +101,10 @@ async function syncResult(job, entry) {
 // ---------- executa 1 job da fila
 async function runCloudJob(job) {
   const planilha = Array.isArray(job.rows) && job.rows.length ? job.rows : null;
+  const quem = job.usuario_nome || job.usuario || 'sem usuário (responsável padrão do .env)';
   console.log(`[${stamp()}] ▶ executando pedido da nuvem: "${job.query}" ` +
-    (planilha ? `(planilha com ${planilha.length} empresas)` : `(meta ${job.target})`));
+    (planilha ? `(planilha com ${planilha.length} empresas)` : `(meta ${job.target})`) +
+    ` — pedido de ${quem}`);
   await db.from('jobs').update({ status: 'rodando', started_at: now(), stage: 'iniciando' }).eq('id', job.id);
 
   if (!await ensureLocal()) {
@@ -108,6 +118,9 @@ async function runCloudJob(job) {
       query: job.query, uf: job.uf, target: job.target,
       // modo planilha: os alvos (nome+CNPJ) já vêm no pedido da fila
       rows: planilha || undefined,
+      // quem pediu no painel → responsável dos leads no Moskit
+      usuario: job.usuario_nome || job.usuario || undefined,
+      moskitUserId: job.moskit_user_id || undefined,
     }),
   });
   if (!kick.ok) {

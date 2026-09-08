@@ -39,7 +39,27 @@
       <button class="tab" data-tab="listas">Minhas listas</button>
     </nav>
     <div class="brand-partner">beam<em>broker</em> + babuya</div>
+    <!-- quem está logado (só no painel da nuvem; o local não tem login) -->
+    <div class="who hidden" id="who">
+      <span id="whoNome"></span>
+      <button type="button" class="linkish" id="btnSair" title="Trocar de usuário">sair</button>
+    </div>
   </header>
+
+  <!-- LOGIN INDIVIDUAL: cada SDR entra com o seu — é assim que os leads da lista
+       caem no Moskit com essa pessoa como responsável. -->
+  <div id="login" class="login hidden">
+    <form id="loginForm" class="login-card" autocomplete="on">
+      <h2>Entrar no painel</h2>
+      <p class="muted small">Cada pessoa tem o seu login. Os leads das listas que <b>você</b> pedir
+        caem no Moskit com você como responsável.</p>
+      <label>Usuário <input id="loginUser" autocomplete="username" autocapitalize="none" placeholder="ex.: julia" /></label>
+      <label>Senha <input id="loginPass" type="password" autocomplete="current-password" /></label>
+      <p id="loginMsg" class="error"></p>
+      <button type="submit">Entrar</button>
+      <p class="muted small">Não tem login? Peça o seu ao Samuel.</p>
+    </form>
+  </div>
 
   <main>
     <!-- ============================== TAB: GERAR ============================== -->
@@ -47,7 +67,8 @@
       <div class="hero" id="hero">
         <h1>Qual lista vamos gerar hoje?</h1>
         <p class="sub">Digite o <b>segmento</b> e a <b>cidade</b>. A ferramenta captura, limpa, cruza os dados
-          (site ✚ CNPJ ✚ Instagram) e entrega <b>leads prontos</b> — sem repetir o que já foi entregue.</p>
+          (site ✚ CNPJ ✚ Instagram) e entrega <b>leads prontos</b> — sem repetir o que já foi entregue.
+          Ao terminar, tudo cai no Moskit com <b>você</b> como responsável.</p>
 
         <form id="searchForm" class="search">
           <svg class="search-ico" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>

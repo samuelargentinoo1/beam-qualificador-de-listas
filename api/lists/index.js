@@ -1,11 +1,11 @@
 'use strict';
 // GET /api/lists — histórico de listas + total entregue por praça.
-const { supa, guard, needDb } = require('../../lib/cloud/supa');
+const { guard } = require('../../lib/cloud/supa');
 
 module.exports = async (req, res) => {
-  if (!guard(req, res)) return;
-  const db = supa();
-  if (!db) return needDb(res);
+  const auth = await guard(req, res);
+  if (!auth) return;
+  const { db } = auth;
 
   const { data: lists, error } = await db.from('lists')
     .select('*').order('n', { ascending: false });

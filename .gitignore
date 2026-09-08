@@ -26,3 +26,6 @@ server.log
 
 # segredos do Supabase (NUNCA subir)
 .env
+# SQL de cadastro dos usuários do painel: contém as SENHAS da equipe
+cadastrar-usuarios.sql
+senha-*.txt
